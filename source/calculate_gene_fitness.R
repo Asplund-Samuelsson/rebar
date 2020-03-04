@@ -283,5 +283,5 @@ tfit = gfit %>%
 # Save fitness table
 write_tsv(
   tfit,
-  paste("results/projects/", proj, "/", proj, ".fitness.tab", sep="")
+  gzfile(paste("results/projects/", proj, "/", proj, ".fitness.tab.gz", sep=""))
 )
