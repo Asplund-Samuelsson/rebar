@@ -1,4 +1,6 @@
-# rebar - _Ralstonia eutropha_ BarSeq analysis
+![alt text](rebar.png "Ralstonia eutropha BarSeq analysis")
+
+# _Ralstonia eutropha_ BarSeq analysis
 
 Scripts for analysis of _Ralstonia eutropha_ Tn-BarSeq data.
 
