@@ -46,13 +46,13 @@ tfit %>%
 # Calculate average fitness across replicates
 afit = tfit %>%
   group_by(
-    locusId, Condition, protein_name,
+    locusId, ClassicID, Condition, protein_name,
     COG, COG_ID, COG_System, COG_Process
   ) %>%
   summarise(Gene_fitness = mean(Gene_fitness)) %>%
   mutate(
     Label = paste(
-      str_trunc(protein_name, 40, "right"), " [", locusId, "]",
+      str_trunc(protein_name, 40, "right"), " [", locusId, "][", ClassicID , "]",
       sep=""
     )
   ) %>%
