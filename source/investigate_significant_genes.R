@@ -87,6 +87,12 @@ afit = afit %>%
     )
   )
 
+# Save fitness table that is used to make the heatmap plot
+outfile = paste(
+  "results/projects/", proj, "/", proj, ".sign_heatmap.tab", sep=""
+)
+write_tsv(afit, outfile)
+
 # Make a plot
 gp = ggplot(afit, aes(y = Label, x = Condition, fill = Gene_fitness))
 gp = gp + geom_tile()
