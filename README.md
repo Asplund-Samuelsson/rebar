@@ -61,7 +61,7 @@ Note that the paths to the Perl scripts are hardcoded and need to be changed for
 
 #### Step 1: Extract per-sample barcode counts
 
-Run the `MultiCodes.pl` script from FEBA on the project:
+Run the `MultiCodes.pl` script from [FEBA](https://bitbucket.org/berkeleylab/feba/src/master/) on the project:
 
 ```
 source/run_MultiCodes.sh rebar
@@ -71,7 +71,7 @@ Creates "codes" and "counts" files in `ìntermediate/rebar/`.
 
 #### Step 2: Combine BarSeq data and genome mappings
 
-Run the `combineBarSeq.pl` script on the project:
+Run the `combineBarSeq.pl` script from [FEBA](https://bitbucket.org/berkeleylab/feba/src/master/) on the project:
 
 ```
 source/run_combineBarSeq.sh rebar
