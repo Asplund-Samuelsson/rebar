@@ -18,13 +18,13 @@ tfit = read_tsv(tfit_file)
 
 # Reduce information
 tfit = tfit %>%
-  select(locusId, Date, Condition, Sample, Gene_fitness, t, Significant) %>%
+  select(locusId, Date, Condition, Sample, Norm_fg, t, Significant) %>%
   distinct()
 
 # Log-transform and center the data
 wide = tfit %>%
-  select(locusId, Sample, Gene_fitness) %>%
-  spread(Sample, Gene_fitness) %>%
+  select(locusId, Sample, Norm_fg) %>%
+  spread(Sample, Norm_fg) %>%
   as.data.frame() %>%
   na.omit()
 

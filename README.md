@@ -81,13 +81,32 @@ Creates "colsum" and "poolcount" files in `results/rebar/`.
 
 #### Step 3: Calculate gene fitness
 
-Calculate gene fitness for the project samples:
+Calculate gene fitness for the project samples using the method described in [Wetmore 2015](https://mbio.asm.org/content/6/3/e00306-15.full):
 
 ```
 source/calculate_gene_fitness.R rebar
 ```
 
-Creates the fitness table `results/projects/rebar/rebar.fitness.tab.gz`.
+Creates the fitness tables `results/projects/rebar/rebar.fitness.tab.gz` for all strains (barcodes), including data per gene (columns `Strains_per_gene`, `Norm_fg`, `t`, `Significant`), and `results/projects/rebar/rebar.gene_fitness.tab.gz` for gene fitness data only (columns `Counts` and `n0` are summed over all strains [barcodes] for each gene, column `log2FC` is log2(`Counts`/`n0`)).
+
+The columns have the following contents:
+
+| Column | Description |
+| ------ | ----------- |
+| barcode | Barcode sequence |
+| locusId | Locus ID (gene name) |
+| scaffoldId | Name of DNA molecule |
+| Date | Sample date batch; Variable connecting samples to t0 samples |
+| Sample | Sample name |
+| Condition | Growth condition |
+| Counts | Read count for strain (barcode) in sample (summed per gene in gene_fitness table) |
+| n0 | Read count in corresponding t0 samples |
+| Strains_per_gene | Number of strains (barcodes) for the current locusId |
+| Strain_fitness | Strain (barcode) fitness; f_s on p.12 in Wetmore 2015 |
+| Norm_fg | Normalized gene fitness; (iii) on p.13 in Wetmore 2015 |
+| t | t-like test statistic; calculated on p.13 in Wetmore 2015 |
+| Significant | Significant gene if \|t\| > 4; stated on p.3 in Wetmore 2015 |
+| log2FC | log2(Counts/n0), only in gene_fitness table |
 
 #### Step 4: Check fitness results with PCA
 
@@ -97,7 +116,7 @@ Generate a PCA plot based on the gene fitness values:
 source/PCA.R rebar
 ```
 
-Creates the PCA plot `results/projects/rebar/rebar.PCA.pdf"`.
+Creates the PCA plot `results/projects/rebar/rebar.PCA.pdf`.
 
 ## Authors
 

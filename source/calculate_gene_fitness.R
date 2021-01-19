@@ -280,8 +280,34 @@ tfit = gfit %>%
   # If the absolute value of t is greater than 4 the fitness is significant
   mutate(Significant = as.numeric(abs(t) > 4))
 
+# Clean up fitness table
+tfit = tfit %>%
+  select(
+    barcode, locusId, scaffoldId, Date, Sample, Condition, Counts, n0,
+    Strains_per_gene, Strain_fitness, Norm_fg, t, Significant
+  )
+
 # Save fitness table
 write_tsv(
   tfit,
   gzfile(paste("results/projects/", proj, "/", proj, ".fitness.tab.gz", sep=""))
+)
+
+# Make gene-centric fitness table
+fitg = tfit %>%
+  group_by(locusId, scaffoldId, Date, Sample, Condition, Strains_per_gene) %>%
+  summarise(
+    Counts = sum(Counts), n0 = sum(n0),
+    Norm_fg = unique(Norm_fg), t = unique(t),
+    Significant = unique(Significant)
+  ) %>%
+  # Calculate fold change
+  mutate(log2FC = log2(Counts / n0))
+
+# Save gene-centric fitness table
+write_tsv(
+  fitg,
+  gzfile(paste(
+    "results/projects/", proj, "/", proj, ".gene_fitness.tab.gz", sep=""
+  ))
 )
