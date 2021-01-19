@@ -18,7 +18,7 @@ anno = read_tsv(anno_file)
 
 # Reduce information
 tfit = tfit %>%
-  select(locusId, Date, Condition, Sample, Gene_fitness, t, Significant) %>%
+  select(locusId, Date, Condition, Sample, Norm_fg, t, Significant) %>%
   distinct()
 
 # Remove outliers and select only significant genes, then modify Isobutanol
@@ -37,8 +37,8 @@ tfit = left_join(tfit, anno)
 tfit %>%
   group_by(Condition, locusId) %>%
   summarise(
-    Negative = sum(Gene_fitness > 0),
-    Positive = sum(Gene_fitness < 0)
+    Negative = sum(Norm_fg > 0),
+    Positive = sum(Norm_fg < 0)
   ) %>%
   mutate(Disagreement = as.numeric(Negative > 0 & Positive > 0)) %>%
   filter(Disagreement != 0)
@@ -49,7 +49,7 @@ afit = tfit %>%
     locusId, ClassicID, Condition, protein_name,
     COG, COG_ID, COG_System, COG_Process
   ) %>%
-  summarise(Gene_fitness = mean(Gene_fitness)) %>%
+  summarise(Norm_fg = mean(Norm_fg)) %>%
   mutate(
     Label = paste(
       str_trunc(protein_name, 40, "right"), " [", locusId, "][", ClassicID , "]",
@@ -60,7 +60,7 @@ afit = tfit %>%
     Label = factor(
       Label,
       levels = group_by(., Label) %>%
-        summarise(f = sum(Gene_fitness)) %>%
+        summarise(f = sum(Norm_fg)) %>%
         arrange(f) %>%
         pull(Label)
     )
@@ -69,8 +69,8 @@ afit = tfit %>%
 # Cluster conditions to make a nice order
 cfit = afit %>%
   ungroup() %>%
-  select(locusId, Condition, Gene_fitness) %>%
-  spread(Condition, Gene_fitness) %>%
+  select(locusId, Condition, Norm_fg) %>%
+  spread(Condition, Norm_fg) %>%
   as.data.frame()
 
 rownames(cfit) = cfit$locusId
@@ -94,7 +94,7 @@ outfile = paste(
 write_tsv(afit, outfile)
 
 # Make a plot
-gp = ggplot(afit, aes(y = Label, x = Condition, fill = Gene_fitness))
+gp = ggplot(afit, aes(y = Label, x = Condition, fill = Norm_fg))
 gp = gp + geom_tile()
 gp = gp + scale_fill_gradient2(
   low="#af8dc3", mid="#f7f7f7", high="#7fbf7b", midpoint=0
