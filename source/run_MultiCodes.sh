@@ -10,7 +10,7 @@ IDIR="data/projects/${PROJ}"
 ODIR="intermediate/projects/${PROJ}"
 
 # Path to FEBA MultiCodes.pl script
-MC="/ssd/common/tools/feba/bin/MultiCodes.pl"
+MC="source/feba/bin/MultiCodes.pl"
 
 # List all input fastq.gz files
 ls ${IDIR} | grep ".fastq.gz$" | while read Infile;

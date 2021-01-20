@@ -1,8 +1,8 @@
 ![alt text](rebar.png "Ralstonia eutropha BarSeq analysis")
 
-# _Ralstonia eutropha_ BarSeq analysis
+# Pipeline for BarSeq analysis
 
-Scripts for analysis of _Ralstonia eutropha_ Tn-BarSeq data.
+Pipeline for analysis of Tn-BarSeq data. The pipeline is based on the scripts of [Morgan Price's Feba repository](https://bitbucket.org/berkeleylab/feba/src/master/). The user is referred to the Feba repository or the original Tn-BarSeq publications for further information.
 
 ## Usage
 
@@ -13,81 +13,71 @@ The pipeline currently calculates gene fitness values by using a TnSeq knockout 
 Before starting, a poolfile, a metadata file, and gzipped FASTQ files must be stored under `data/projects/`:
 
 ```
-data/projects/rebar.poolfile.tab
-data/projects/rebar.metadata.tab
-data/projects/rebar/*.fastq.gz
+data/projects/example.poolfile.tab
+data/projects/example.metadata.tab
+data/projects/example/*.fastq.gz
 ```
 
-The poolfile describes TnSeq mappings and looks like this:
+The poolfile describes TnSeq mappings, and is obtained as output from the [TnSeq pipeline](https://github.com/m-jahn/TnSeq-pipe).
+It has the following structure (note: the column for gene names is currently hard-coded as `old_locus_tag`).
 
 ```
-barcode	rcbarcode	nTot	n	scaffold	strand	pos	n2	scaffold2	strand2	pos2	nPastEnd
-TCTTGGTCCAGGAAGCCGAT	ATCGGCTTCCTGGACCAAGA	83	80	AY305378	+	325252	1	NC_008313	-	2508065	0
-TGGGTGATCTTGGGTGTAGG	CCTACACCCAAGATCACCCA	32	31	NC_008313	-	100293	1	NC_008314	+	1850688	0
-CCGGGTAAGCGTTTGTGTTG	CAACACAAACGCTTACCCGG	10	9	NC_008314	-	649441	1	NC_008313	-	342601	0
-GCTATGTATACATAGTGACT	AGTCACTATGTATACATAGC	956	925	NC_008313	+	701767	6	NC_008313	+	701768	0
+barcode  rcbarcode  nTot     n scaffold strand    pos   begin     end gene_strand desc  old_locus_tag new_locus_tag gene_length pos_relative central
+CAGAAGA… CCCCGCCC…     1     1 NC_0083… +      1.02e6 1014705 1015328 -           gene  H16_B0896     H16_RS23215           623        0.475 TRUE   
+CTGTTGG… ACCAACCC…     1     1 NC_0083… +      3.12e6 3118049 3119266 +           gene  H16_A2889     H16_RS14395          1217        0.411 TRUE   
+AGCCGCG… GTCCCCCT…     1     1 NC_0083… -      3.44e6 3442926 3443798 -           gene  H16_A3183     H16_RS15875           872        0.861 TRUE   
+CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -           gene  H16_A3206     H16_RS34325           524        0.960 FALSE  
 ...
 ```
 
-The metadata file contains sample descriptions for the FASTQ files:
+The tab-separated metadata file contains sample descriptions for the FASTQ files. The `Filename`s must match the names in `/data/projects/example/`
 
 ```
-ID	Date	Condition	Sample
-IT001	8/14	Fructose	1a
-IT002	8/14	Succinate	2a
-IT003	8/28	Formate	3a
-IT004	8/14	Fructose	1b
-...
+Filename          ID Condition Replicate Date       Time          Reference
+01_cond1gen0_1     1 generic           1 2020-12-05 0 generations TRUE     
+02_cond1gen0_2     2 generic           2 2020-12-05 0 generations TRUE     
+03_cond1gen8_1     3 generic           1 2020-12-08 8 generations FALSE    
+04_cond1gen8_2     4 generic           2 2020-12-08 8 generations FALSE  
 ```
 
 The gzipped FASTQ files (one per sample) need to be placed in a project-unique directory under `data/`:
-```
-data/projects/rebar/
-```
-
-...and they should be named as such with IDs matching the metadata file:
 
 ```
-Fructose_IT001_1.fastq.gz
-Succinate_IT002_1.fastq.gz
-Formate_IT003_1.fastq.gz
-Fructose_IT004_1.fastq.gz
-...
+data/projects/example/samplefile.fastq.gz
 ```
 
 ### Running the analysis
 
-Note that the paths to the Perl scripts are hardcoded and need to be changed for each installation.
-
 #### Step 1: Extract per-sample barcode counts
 
-Run the `MultiCodes.pl` script from [FEBA](https://bitbucket.org/berkeleylab/feba/src/master/) on the project:
+Run the wrapper for the `MultiCodes.pl` script from [FEBA](https://bitbucket.org/berkeleylab/feba/src/master/) on your project:
 
 ```
-source/run_MultiCodes.sh rebar
+source/run_MultiCodes.sh example
 ```
 
-Creates "codes" and "counts" files in `ìntermediate/rebar/`.
+Creates `.codes` and `.counts` files in `ìntermediate/example/`.
 
 #### Step 2: Combine BarSeq data and genome mappings
 
 Run the `combineBarSeq.pl` script from [FEBA](https://bitbucket.org/berkeleylab/feba/src/master/) on the project:
 
 ```
-source/run_combineBarSeq.sh rebar
+source/run_combineBarSeq.sh example
 ```
 
-Creates "colsum" and "poolcount" files in `results/rebar/`.
+Creates `.colsum` and `.poolcount` files in `results/example/`.
 
 #### Step 3: Calculate gene fitness
 
 Calculate gene fitness for the project samples using the method described in [Wetmore 2015](https://mbio.asm.org/content/6/3/e00306-15.full):
+Note that the column for mapped gene names is currently hard-coded. This can be customized in the header of the script.
 
 ```
-source/calculate_gene_fitness.R rebar
+source/calculate_gene_fitness.R example
 ```
 
-Creates the fitness tables `results/projects/rebar/rebar.fitness.tab.gz` for all strains (barcodes), including data per gene (columns `Strains_per_gene`, `Norm_fg`, `t`, `Significant`), and `results/projects/rebar/rebar.gene_fitness.tab.gz` for gene fitness data only (columns `Counts` and `n0` are summed over all strains [barcodes] for each gene, column `log2FC` is log2(`Counts`/`n0`)).
+Creates the fitness tables `results/projects/example/example.fitness.tab.gz` for all strains (barcodes), including data per gene (columns `Strains_per_gene`, `Norm_fg`, `t`, `Significant`), and `results/projects/example/example.gene_fitness.tab.gz` for gene fitness data only (columns `Counts` and `n0` are summed over all strains [barcodes] for each gene, column `log2FC` is log2(`Counts`/`n0`)).
 
 The columns have the following contents:
 
@@ -113,7 +103,7 @@ The columns have the following contents:
 Generate a PCA plot based on the gene fitness values:
 
 ```
-source/PCA.R rebar
+source/PCA.R example
 ```
 
 Creates the PCA plot `results/projects/rebar/rebar.PCA.pdf`.
@@ -123,3 +113,5 @@ Creates the PCA plot `results/projects/rebar/rebar.PCA.pdf`.
 Johannes Asplund-Samuelsson, KTH (johannes.asplund.samuelsson@scilifelab.se)
 
 Qi Chen, KTH (qiche@kth.se)
+
+Michael Jahn, KTH (michael.jahn@scilifelab.se)
