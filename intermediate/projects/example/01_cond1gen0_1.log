@@ -1,0 +1,9 @@
+Reads 1000000 Multiplexed 1000000 Usable(20) 985095 fraction 0.985095 unique codes 109079 
+Wrong presequence position: 794 reads (0.079%)
+Off	18	0	0.000
+Off	19	0	0.000
+Off	20	985095	1.000
+Off	21	0	0.000
+Off	22	0	0.000
+Wrote 109079 unique barcodes to intermediate/projects/example/01_cond1gen0_1.codes
+Wrote number of barcodes seen a certain number of times to intermediate/projects/example/01_cond1gen0_1.counts; nOnce = 64787
