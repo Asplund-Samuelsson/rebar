@@ -8,7 +8,30 @@ Pipeline for analysis of Tn-BarSeq data. The pipeline is based on the scripts of
 
 The pipeline currently calculates gene fitness values by using a TnSeq knockout genome mapping "poolfile", a "metadata" file, and gzipped FASTQ files organized in "project" directories under `data/`, `intermediate/`, and `results/`.
 
-### Input data
+
+### Retrieving data from Illumina basespace *via* command line
+
+Data in form of `*.fastq` files can be manually downloaded from the basespace website on MacOS or Windows.
+For Linux systems, only the command line option is available via Illumina's basespace client `bs-cp`. Files are in Illumina's proprietary format. Execute the following line in a terminal and replace `<your-run-ID>` with the number you will find in the URL of your browser. For example, log in to basespace, navigate to `runs`, select a sequencing run and copy the ID you find in the URL: `https://basespace.illumina.com/run/200872678/details`.
+
+```
+bs-cp -v https://basespace.illumina.com/Run/<your-run-ID> /your/target/directory/
+```
+
+The data must then be converted to `*.fastq` (plain text) files using Illumina's `bcl2fastq` tool. If it complains about indices being too similar to demultiplex, the command has to be executed with option `--barcode-mismatches 0`.
+
+```
+cd /your/target/directory/
+bcl2fastq
+```
+
+The gzipped `*.fastq.gz` files will be stored in `data/projects/example/Data/Intensities/BaseCalls/`. To merge several lanes of the same sample into a new `*.fastq.gz` file, run the following script (pointer has to be in the `rebar/` directory). Output files will be saved to `data/projects/example/`.
+
+```
+source source/merge_fastq_files.sh example
+```
+
+### Input files
 
 Before starting, a poolfile, a metadata file, and gzipped FASTQ files must be stored under `data/projects/`:
 
