@@ -18,20 +18,18 @@ tfit = read_tsv(tfit_file)
 
 # Reduce information
 tfit = tfit %>%
-  select(locusId, Date, Condition, Sample, Norm_fg, t, Significant) %>%
-  distinct()
+  select(locusId, Date, Condition, ID, Norm_fg, t, Significant) %>%
+  distinct() %>%
+  mutate(ID = as.character(ID))
 
 # Log-transform and center the data
 wide = tfit %>%
-  select(locusId, Sample, Norm_fg) %>%
-  spread(Sample, Norm_fg) %>%
+  select(locusId, ID, Norm_fg) %>%
+  spread(ID, Norm_fg) %>%
   as.data.frame() %>%
   na.omit()
 
 rownames(wide) = wide$locusId
-
-# Omit outliers
-wide = select(wide, -`3a`, -`3b`)
 
 fmat = select(wide, -locusId) %>%
   as.matrix() %>%
@@ -44,30 +42,21 @@ fpca = prcomp(fmat)
 
 # Create plotting dataframes
 fplt = as.data.frame(fpca$rotation)
-fplt$Sample = rownames(fplt)
+fplt$ID = rownames(fplt)
 
 # Add information about replicates, conditions, and dates
 fplt = fplt %>%
   as_tibble() %>%
-  select(Sample, PC1, PC2) %>%
-  inner_join(select(tfit, Date, Condition, Sample) %>% distinct()) %>%
-  mutate(
-    Condition = ifelse(
-      startsWith(Condition, "Isobutanol"), "Isobutanol", Condition
-    ),
-    Label = ifelse(
-      grepl("a", Sample), "", Condition
-    )
-  )
+  select(ID, PC1, PC2) %>%
+  inner_join(select(tfit, Date, Condition, ID) %>% distinct())
 
 # Calculate fraction of variance per PC
 pcva = percent(fpca$sdev^2 / sum(fpca$sdev^2))[1:3]
 
-gp = ggplot(fplt, aes(x=PC1, y=PC2, label=Label, group=Condition, colour=Date))
+gp = ggplot(fplt, aes(x=PC1, y=PC2, label=ID, group=Condition, colour=Date))
 gp = gp + geom_line(colour="grey")
 gp = gp + geom_point()
 gp = gp + geom_text_repel(force=3, size=4)
-gp = gp + scale_colour_manual(values=c("#f1a340", "#998ec3"))
 gp = gp + labs(
             x=paste("PC1 (", pcva[1], ")", sep=""),
             y=paste("PC2 (", pcva[2], ")", sep="")

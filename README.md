@@ -1,4 +1,4 @@
-![alt text](rebar.png "Ralstonia eutropha BarSeq analysis")
+![alt text](rebar.png "Refactored BarSeq analysis")
 
 # Pipeline for BarSeq analysis
 
