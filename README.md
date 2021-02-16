@@ -129,7 +129,7 @@ Generate a PCA plot based on the gene fitness values:
 source/PCA.R example
 ```
 
-Creates the PCA plot `results/projects/rebar/rebar.PCA.pdf`.
+Creates the PCA plot `results/projects/example/example.PCA.pdf`.
 
 ## Authors
 
