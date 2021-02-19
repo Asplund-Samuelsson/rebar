@@ -9,7 +9,7 @@ Pipeline for analysis of Tn-BarSeq data. The pipeline is based on the scripts of
 The pipeline currently calculates gene fitness values by using a TnSeq knockout genome mapping "poolfile", a "metadata" file, and gzipped FASTQ files organized in "project" directories under `data/`, `intermediate/`, and `results/`.
 
 
-### Retrieving data from Illumina basespace *via* command line
+### Retrieving data from Illumina basespace *via* command line (optional)
 
 Data in form of `*.fastq` files can be manually downloaded from the basespace website on MacOS or Windows.
 For Linux systems, only the command line option is available via Illumina's basespace client `bs-cp`. Files are in Illumina's proprietary format. Execute the following line in a terminal and replace `<your-run-ID>` with the number you will find in the URL of your browser. For example, log in to basespace, navigate to `runs`, select a sequencing run and copy the ID you find in the URL: `https://basespace.illumina.com/run/200872678/details`.
@@ -25,10 +25,14 @@ cd /your/target/directory/
 bcl2fastq
 ```
 
-The gzipped `*.fastq.gz` files will be stored in `data/projects/example/Data/Intensities/BaseCalls/`. To merge several lanes of the same sample into a new `*.fastq.gz` file, run the following script (pointer has to be in the `rebar/` directory). Output files will be saved to `data/projects/example/`.
+The gzipped `*.fastq.gz` files will be stored in `data/projects/example/Data/Intensities/BaseCalls/`. To merge several lanes or replicates of the same sample into a new `*.fastq.gz` file, run the following script. Input and output folder can be specified with the following optional parameters (the default is current directory `./`):
+
+- `input_dir` - input directory
+- `output_dir` - - output directory
+- `file_ext` - file extension of the target files (default: `fastq.gz`)
 
 ```
-source source/merge_fastq_files.sh example
+source/merge_fastq_files.sh --input_dir data/projects/example/ --output_dir data/projects/example/
 ```
 
 ### Input files

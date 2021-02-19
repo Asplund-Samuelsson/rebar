@@ -423,15 +423,20 @@ summary {
 <div id="usage" class="section level2">
 <h2>Usage</h2>
 <p>The pipeline currently calculates gene fitness values by using a TnSeq knockout genome mapping “poolfile”, a “metadata” file, and gzipped FASTQ files organized in “project” directories under <code>data/</code>, <code>intermediate/</code>, and <code>results/</code>.</p>
-<div id="retrieving-data-from-illumina-basespace-via-command-line" class="section level3">
-<h3>Retrieving data from Illumina basespace <em>via</em> command line</h3>
+<div id="retrieving-data-from-illumina-basespace-via-command-line-optional" class="section level3">
+<h3>Retrieving data from Illumina basespace <em>via</em> command line (optional)</h3>
 <p>Data in form of <code>*.fastq</code> files can be manually downloaded from the basespace website on MacOS or Windows. For Linux systems, only the command line option is available via Illumina’s basespace client <code>bs-cp</code>. Files are in Illumina’s proprietary format. Execute the following line in a terminal and replace <code>&lt;your-run-ID&gt;</code> with the number you will find in the URL of your browser. For example, log in to basespace, navigate to <code>runs</code>, select a sequencing run and copy the ID you find in the URL: <code>https://basespace.illumina.com/run/200872678/details</code>.</p>
 <pre><code>bs-cp -v https://basespace.illumina.com/Run/&lt;your-run-ID&gt; /your/target/directory/</code></pre>
 <p>The data must then be converted to <code>*.fastq</code> (plain text) files using Illumina’s <code>bcl2fastq</code> tool. If it complains about indices being too similar to demultiplex, the command has to be executed with option <code>--barcode-mismatches 0</code>.</p>
 <pre><code>cd /your/target/directory/
 bcl2fastq</code></pre>
-<p>The gzipped <code>*.fastq.gz</code> files will be stored in <code>data/projects/example/Data/Intensities/BaseCalls/</code>. To merge several lanes of the same sample into a new <code>*.fastq.gz</code> file, run the following script (pointer has to be in the <code>rebar/</code> directory). Output files will be saved to <code>data/projects/example/</code>.</p>
-<pre><code>source source/merge_fastq_files.sh example</code></pre>
+<p>The gzipped <code>*.fastq.gz</code> files will be stored in <code>data/projects/example/Data/Intensities/BaseCalls/</code>. To merge several lanes or replicates of the same sample into a new <code>*.fastq.gz</code> file, run the following script. Input and output folder can be specified with the following optional parameters (the default is current directory <code>./</code>):</p>
+<ul>
+<li><code>input_dir</code> - input directory</li>
+<li><code>output_dir</code> - - output directory</li>
+<li><code>file_ext</code> - file extension of the target files (default: <code>fastq.gz</code>)</li>
+</ul>
+<pre><code>source/merge_fastq_files.sh --input_dir data/projects/example/ --output_dir data/projects/example/</code></pre>
 </div>
 <div id="input-files" class="section level3">
 <h3>Input files</h3>
@@ -441,16 +446,16 @@ data/projects/example.metadata.tab
 data/projects/example/*.fastq.gz</code></pre>
 <p>The poolfile describes TnSeq mappings, and is obtained as output from the <a href="https://github.com/m-jahn/TnSeq-pipe">TnSeq pipeline</a>. It has the following structure (note: the column for gene names is currently hard-coded as <code>old_locus_tag</code>).</p>
 <pre><code>barcode  rcbarcode  nTot     n scaffold strand    pos   begin     end gene_strand desc  old_locus_tag new_locus_tag gene_length pos_relative central
-CAGAAGA… CCCCGCCC…     1     1 NC_0083… +      1.02e6 1014705 1015328 -           gene  H16_B0896     H16_RS23215           623        0.475 TRUE
-CTGTTGG… ACCAACCC…     1     1 NC_0083… +      3.12e6 3118049 3119266 +           gene  H16_A2889     H16_RS14395          1217        0.411 TRUE
-AGCCGCG… GTCCCCCT…     1     1 NC_0083… -      3.44e6 3442926 3443798 -           gene  H16_A3183     H16_RS15875           872        0.861 TRUE
-CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -           gene  H16_A3206     H16_RS34325           524        0.960 FALSE
+CAGAAGA… CCCCGCCC…     1     1 NC_0083… +      1.02e6 1014705 1015328 -           gene  H16_B0896     H16_RS23215           623        0.475 TRUE   
+CTGTTGG… ACCAACCC…     1     1 NC_0083… +      3.12e6 3118049 3119266 +           gene  H16_A2889     H16_RS14395          1217        0.411 TRUE   
+AGCCGCG… GTCCCCCT…     1     1 NC_0083… -      3.44e6 3442926 3443798 -           gene  H16_A3183     H16_RS15875           872        0.861 TRUE   
+CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -           gene  H16_A3206     H16_RS34325           524        0.960 FALSE  
 ...</code></pre>
 <p>The tab-separated metadata file contains sample descriptions for the FASTQ files. The <code>Filename</code>s must match the names in <code>/data/projects/example/</code></p>
 <pre><code>Filename          ID Condition Replicate Date       Time          Reference
-01_cond1gen0_1     1 generic           1 2020-12-05 0 generations TRUE
-02_cond1gen0_2     2 generic           2 2020-12-05 0 generations TRUE
-03_cond1gen8_1     3 generic           1 2020-12-08 8 generations FALSE
+01_cond1gen0_1     1 generic           1 2020-12-05 0 generations TRUE     
+02_cond1gen0_2     2 generic           2 2020-12-05 0 generations TRUE     
+03_cond1gen8_1     3 generic           1 2020-12-08 8 generations FALSE    
 04_cond1gen8_2     4 generic           2 2020-12-08 8 generations FALSE  </code></pre>
 <p>The gzipped FASTQ files (one per sample) need to be placed in a project-unique directory under <code>data/</code>:</p>
 <pre><code>data/projects/example/samplefile.fastq.gz</code></pre>
