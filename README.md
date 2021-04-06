@@ -18,21 +18,22 @@ For Linux systems, only the command line option is available via Illumina's base
 bs-cp -v https://basespace.illumina.com/Run/<your-run-ID> /your/target/directory/
 ```
 
-The data must then be converted to `*.fastq` (plain text) files using Illumina's `bcl2fastq` tool. If it complains about indices being too similar to demultiplex, the command has to be executed with option `--barcode-mismatches 0`.
+The data must then be converted to `*.fastq` (plain text) files using Illumina's `bcl2fastq` tool. It is recommended to run it with option `--no-lane-splitting` in order to obtain one file per sample, instead of several files subdivided by lane. If it complains about indices being too similar to demultiplex, the option `--barcode-mismatches 0` can be added.
 
 ```
 cd /your/target/directory/
-bcl2fastq
+bcl2fastq --no-lane-splitting
 ```
 
-The gzipped `*.fastq.gz` files will be stored in `data/projects/example/Data/Intensities/BaseCalls/`. To merge several lanes or replicates of the same sample into a new `*.fastq.gz` file, run the following script. Input and output folder can be specified with the following optional parameters (the default is current directory `./`):
+The gzipped `*.fastq.gz` files will be stored in `./Data/Intensities/BaseCalls/`. To merge replicates of the same sample into a new `*.fastq.gz` file, run the following script. The script merges files matching a certain `pattern` into a single new file. Input and output folder can be specified with optional parameters (the default is current directory `./`). New file names are truncated to the part preceding the variable pattern (all characters trailing the pattern are ignored).
 
 - `input_dir` - input directory
 - `output_dir` - - output directory
 - `file_ext` - file extension of the target files (default: `fastq.gz`)
+- `pattern` - all files matching this pattern will be merged (default: `_L00[1-4]_`)
 
 ```
-source/merge_fastq_files.sh --input_dir data/projects/example/ --output_dir data/projects/example/
+source/merge_fastq_files.sh --input_dir data/fastq/ --output_dir data/fastq/ --pattern _R.
 ```
 
 ### Input files
