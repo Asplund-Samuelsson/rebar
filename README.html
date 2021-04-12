@@ -477,19 +477,30 @@ CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -   
 </div>
 <div id="step-2-combine-barseq-data-and-genome-mappings" class="section level4">
 <h4>Step 2: Combine BarSeq data and genome mappings</h4>
-<p>This script is a wrapper for the <code>combineBarSeq.pl</code> script from <a href="https://bitbucket.org/berkeleylab/feba/src/master/">FEBA</a>. It maps barcodes to genomic positions and summarizes results in a single output table (<code>poolcount.tsv</code>) and a short report (<code>report.tsv</code>). It takes the following optional arguments:</p>
+<p>This script is a wrapper for the <code>combineBarSeq.pl</code> script from <a href="https://bitbucket.org/berkeleylab/feba/src/master/">FEBA</a>. It maps barcodes to genomic positions and summarizes results in a single output table (<code>.poolcount</code>) and a short report (<code>.colsum</code>). It takes the following optional arguments:</p>
 <ul>
-<li><code>input_dir</code> - (default <code>./</code>)</li>
+<li><code>input_dir</code> - path to <code>.counts</code> and <code>.codes</code> files (default <code>./</code>)</li>
 <li><code>output_dir</code> (default <code>./</code>)</li>
-<li><code>pattern</code> -</li>
+<li><code>poolfile</code> - path to the pool file (default <code>./ref/poolfile.tsv</code>)</li>
 </ul>
-<pre><code>source/run_combineBarSeq.sh example</code></pre>
+<pre><code>source/run_combineBarSeq.sh --input_dir data/example/counts --output_dir data/example/results</code></pre>
 </div>
 <div id="step-3-calculate-gene-fitness" class="section level4">
 <h4>Step 3: Calculate gene fitness</h4>
-<p>Calculate gene fitness for the project samples using the method described in <a href="https://mbio.asm.org/content/6/3/e00306-15.full">Wetmore 2015</a>: Note that the column for mapped gene names is currently hard-coded. This can be customized in the header of the script.</p>
-<pre><code>source/calculate_gene_fitness.R example</code></pre>
-<p>Creates the fitness tables <code>results/projects/example/example.fitness.tab.gz</code> for all strains (barcodes), including data per gene (columns <code>Strains_per_gene</code>, <code>Norm_fg</code>, <code>t</code>, <code>Significant</code>), and <code>results/projects/example/example.gene_fitness.tab.gz</code> for gene fitness data only (columns <code>Counts</code> and <code>n0</code> are summed over all strains [barcodes] for each gene, column <code>log2FC</code> is log2(<code>Counts</code>/<code>n0</code>)).</p>
+<p>This script calculates gene fitness using the method described in <a href="https://mbio.asm.org/content/6/3/e00306-15.full">Wetmore 2015</a>. The script takes the following arguments. All files are saved to the <code>output_dir</code> folder.</p>
+<ul>
+<li><code>result</code> - path to the <code>.poolcount</code> file from previous step (default: <code>./data/example/results/result.poolcount</code>)</li>
+<li><code>poolfile</code> - path to the pool file (default <code>./ref/poolfile.tsv</code>)</li>
+<li><code>gene_id</code> - name of the column containing gene IDs in the pool file</li>
+<li><code>metadata</code> - path to the metadata file (default: <code>./data/example/fastq/metadata.tsv</code>)</li>
+<li><code>output_dir</code> (default <code>./</code>)</li>
+</ul>
+<pre><code>source/calculate_gene_fitness.sh --result data/example/results/result.poolcount \
+  --poolfile ref/poolfile.tsv \
+  --gene_id old_locus_tag \
+  --metadata data/example/fastq/metadata.tsv \
+  --output_dir data/example/results/</code></pre>
+<p>Expected output are result tables in memory-efficient <code>.Rdata</code> format and summary plots in <code>.png</code> and <code>.pdf</code> format. The two tables are <code>fitness.Rdata</code> for all strains (barcodes), including data per gene (columns <code>Strains_per_gene</code>, <code>Norm_fg</code>, <code>t</code>, <code>Significant</code>), and <code>gene_fitness.Rdata</code> for gene fitness data only (columns <code>Counts</code> and <code>n0</code> are summed over all strains [barcodes] for each gene, column <code>log2FC</code> is log2(<code>Counts</code>/<code>n0</code>)).</p>
 <p>The columns have the following contents:</p>
 <table>
 <colgroup>
@@ -561,9 +572,6 @@ CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -   
 </tr>
 </tbody>
 </table>
-</div>
-<div id="step-4-check-fitness-results-with-pca" class="section level4">
-<h4>Step 4: Check fitness results with PCA</h4>
 <p>Generate a PCA plot based on the gene fitness values:</p>
 <pre><code>source/PCA.R example</code></pre>
 <p>Creates the PCA plot <code>results/projects/example/example.PCA.pdf</code>.</p>
