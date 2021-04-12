@@ -95,14 +95,23 @@ source/run_combineBarSeq.sh --input_dir data/example/counts --output_dir data/ex
 
 #### Step 3: Calculate gene fitness
 
-This script calculates gene fitness using the method described in [Wetmore 2015](https://mbio.asm.org/content/6/3/e00306-15.full). 
-Note that the column for mapped gene names is currently hard-coded. This can be customized in the header of the script.
+This script calculates gene fitness using the method described in [Wetmore 2015](https://mbio.asm.org/content/6/3/e00306-15.full). The script takes the following arguments. All files are saved to the `output_dir` folder.
+
+- `result` - path to the `.poolcount` file from previous step (default: `./data/example/results/result.poolcount`)
+- `poolfile` - path to the pool file (default `./ref/poolfile.tsv`)
+- `gene_id` - name of the column containing gene IDs in the pool file
+- `metadata` - path to the metadata file (default: `./data/example/fastq/metadata.tsv`)
+- `output_dir` (default `./`)
 
 ```
-source/calculate_gene_fitness.R example
+source/calculate_gene_fitness.sh --result data/example/results/result.poolcount \
+  --poolfile ref/poolfile.tsv \
+  --gene_id old_locus_tag \
+  --metadata data/example/fastq/metadata.tsv \
+  --output_dir data/example/results/
 ```
 
-Creates the fitness tables `results/projects/example/example.fitness.tab.gz` for all strains (barcodes), including data per gene (columns `Strains_per_gene`, `Norm_fg`, `t`, `Significant`), and `results/projects/example/example.gene_fitness.tab.gz` for gene fitness data only (columns `Counts` and `n0` are summed over all strains [barcodes] for each gene, column `log2FC` is log2(`Counts`/`n0`)).
+Expected output are result tables in memory-efficient `.Rdata` format and summary plots in `.png` and `.pdf` format. The two tables are `fitness.Rdata` for all strains (barcodes), including data per gene (columns `Strains_per_gene`, `Norm_fg`, `t`, `Significant`), and `gene_fitness.Rdata` for gene fitness data only (columns `Counts` and `n0` are summed over all strains [barcodes] for each gene, column `log2FC` is log2(`Counts`/`n0`)).
 
 The columns have the following contents:
 
@@ -123,15 +132,6 @@ The columns have the following contents:
 | Significant | Significant gene if \|t\| > 4; stated on p.3 in Wetmore 2015 |
 | log2FC | log2(Counts/n0), only in gene_fitness table |
 
-#### Step 4: Check fitness results with PCA
-
-Generate a PCA plot based on the gene fitness values:
-
-```
-source/PCA.R example
-```
-
-Creates the PCA plot `results/projects/example/example.PCA.pdf`.
 
 ## Authors
 

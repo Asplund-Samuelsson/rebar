@@ -1,21 +1,28 @@
 #!/usr/bin/env Rscript
-options(width=150)
-library(tidyverse)
+#
+# Authors: 
+# Johannes Asplund-Samuelsson, KTH (johannes.asplund.samuelsson@scilifelab.se)
+# Qi Chen, KTH (qiche@kth.se)
+# Michael Jahn, KTH (michael.jahn@scilifelab.se)
+# 
+# Description: This script calculates fitness score for each gene and condition,
+# and exports results tables and summary figures.
 
-# Define project
-args = commandArgs(trailingOnly=TRUE)
-proj = args[1]
-gene_col = "old_locus_tag"
+# LOAD PACKAGES
+# ====================
+#
+cat("Loading required R packges: tidyverse.\n")
+suppressPackageStartupMessages({
+  library(tidyverse)
+})
 
-# Define infiles
-gene_file = paste("data/projects/", proj, ".poolfile.tab", sep="")
-barc_file = paste("results/projects/", proj, "/", proj, ".poolcount", sep="")
-meta_file = paste("data/projects/", proj, ".metadata.tab", sep="")
-
-# Load data
-gene = read_tsv(gene_file)
-barc = read_tsv(barc_file)
-meta = read_tsv(meta_file)
+# supplied arguments
+args <- commandArgs(trailingOnly = TRUE)
+barc <- read_tsv(args[1], col_types = cols())
+gene <- read_tsv(args[2], col_types = cols())
+gene_col <- args[3]
+meta <- read_tsv(args[4], col_types = cols())
+output_dir <- args[5]
 
 # Consider only barcodes inserted into the central 10% to 90% of the genes
 if ("central" %in% colnames(gene)) {
@@ -24,8 +31,11 @@ if ("central" %in% colnames(gene)) {
 gene <- gene %>% rename(locusId = all_of(gene_col)) %>%
   select(barcode, scaffold, locusId, begin, end, gene_strand, central)
 
+# optionally remove fastq.gz endings in metadat file
+meta <- mutate(meta, Filename = gsub(".fastq.gz$", "", Filename))
+
 # Associate barcodes with the genes according to their scaffolds and positions
-barc = left_join(barc, gene) %>%
+barc <- left_join(barc, gene) %>%
   # Gather the counts of each sample from a column to a row
   gather(Filename, Counts, meta$Filename) %>%
   # Add metadata for samples
@@ -34,7 +44,7 @@ barc = left_join(barc, gene) %>%
 # Select barcodes and genes with adequate coverage in time-zero samples:
 # - at least 3 reads per strain
 # - 30 reads per gene
-bar0 = barc %>%
+bar0 <- barc %>%
   # Filter time-zero samples
   filter(Reference) %>%
   # Sum per-strain counts across all replicate time-zero samples for each condition
@@ -48,7 +58,7 @@ bar0 = barc %>%
 
 
 # Filter to only the adequate barcodes in the barcode pool
-barc = left_join(barc, bar0 %>% ungroup %>% 
+barc <- left_join(barc, bar0 %>% ungroup %>% 
     select(barcode, locusId, Condition, n0) %>% distinct) %>%
   # Remove time-zero since it is now included as the variable n0
   filter(!is.na(n0), !Reference)
@@ -278,12 +288,6 @@ tfit = tfit %>%
     Strains_per_gene, Strain_fitness, Norm_fg, t, Significant
   )
 
-# Save fitness table
-write_tsv(
-  tfit,
-  gzfile(paste("results/projects/", proj, "/", proj, ".fitness.tab.gz", sep=""))
-)
-
 # Make gene-centric fitness table
 fitg = tfit %>%
   group_by(locusId, scaffold, Date, Time, ID, Condition, Replicate, Strains_per_gene) %>%
@@ -295,10 +299,7 @@ fitg = tfit %>%
   # Calculate fold change
   mutate(log2FC = log2(Counts / n0))
 
-# Save gene-centric fitness table
-write_tsv(
-  fitg,
-  gzfile(paste(
-    "results/projects/", proj, "/", proj, ".gene_fitness.tab.gz", sep=""
-  ))
-)
+# Save result tables to output folder, in Rdata format
+cat("Saving 'fitness.Rdata' and 'fitness_gene.Rdata' to", output_dir, ".\n")
+save(tfit, file = paste0(output_dir, "/fitness.Rdata"))
+save(fitg, file = paste0(output_dir, "/fitness_gene.Rdata"))
