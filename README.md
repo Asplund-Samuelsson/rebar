@@ -6,7 +6,7 @@ Pipeline for analysis of Tn-BarSeq data. The pipeline is based on the scripts of
 
 ## Usage
 
-The pipeline currently calculates gene fitness values by using a TnSeq knockout genome mapping "poolfile", a "metadata" file, and gzipped FASTQ files organized in "project" directories under `data/`, `intermediate/`, and `results/`.
+The pipeline currently calculates gene fitness values by using a TnSeq knockout genome mapping 'pool file', a 'metadata' file, and gzipped `fastq` files.
 
 
 ### Retrieving data from Illumina basespace *via* command line (optional)
@@ -38,16 +38,11 @@ source/merge_fastq_files.sh --input_dir data/fastq/ --output_dir data/fastq/ --p
 
 ### Input files
 
-Before starting, a poolfile, a metadata file, and gzipped FASTQ files must be stored under `data/projects/`:
+Before starting, a **pool file**, a **metadata** file, and gzipped **`fastq` files** must be prepared.
 
-```
-data/projects/example.poolfile.tab
-data/projects/example.metadata.tab
-data/projects/example/*.fastq.gz
-```
+#### Pool file
 
-The poolfile describes TnSeq mappings, and is obtained as output from the [TnSeq pipeline](https://github.com/m-jahn/TnSeq-pipe).
-It has the following structure (note: the column for gene names is currently hard-coded as `old_locus_tag`).
+The pool file describes TnSeq mappings, and is obtained as output from the [TnSeq pipeline](https://github.com/m-jahn/TnSeq-pipe). It has the following structure. Note that the column for gene IDs is currently named `old_locus_tag`, this can customized if needed. The default location for pool files is `ref/`.
 
 ```
 barcode  rcbarcode  nTot     n scaffold strand    pos   begin     end gene_strand desc  old_locus_tag new_locus_tag gene_length pos_relative central
@@ -58,47 +53,49 @@ CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -   
 ...
 ```
 
-The tab-separated metadata file contains sample descriptions for the FASTQ files. The `Filename`s must match the names in `/data/projects/example/`
+#### Metadata file
+
+The tab-separated `metadata.tsv` file contains sample descriptions for the `fastq` files. The `Filename`s must match the names of the supplied files (for our example data, the files in `/data/example/fastq/`). The default location of the metadata file
 
 ```
 Filename          ID Condition Replicate Date       Time          Reference
-01_cond1gen0_1     1 generic           1 2020-12-05 0 generations TRUE     
-02_cond1gen0_2     2 generic           2 2020-12-05 0 generations TRUE     
-03_cond1gen8_1     3 generic           1 2020-12-08 8 generations FALSE    
-04_cond1gen8_2     4 generic           2 2020-12-08 8 generations FALSE  
-```
-
-The gzipped FASTQ files (one per sample) need to be placed in a project-unique directory under `data/`:
-
-```
-data/projects/example/samplefile.fastq.gz
+01_cond1gen0_1.fast.gz     1 generic           1 2020-12-05 0 generations TRUE     
+02_cond1gen0_2.fast.gz     2 generic           2 2020-12-05 0 generations TRUE     
+03_cond1gen8_1.fast.gz     3 generic           1 2020-12-08 8 generations FALSE    
+04_cond1gen8_2.fast.gz     4 generic           2 2020-12-08 8 generations FALSE  
 ```
 
 ### Running the analysis
 
 #### Step 1: Extract per-sample barcode counts
 
-Run the wrapper for the `MultiCodes.pl` script from [FEBA](https://bitbucket.org/berkeleylab/feba/src/master/) on your project:
+This script is a wrapper for the `MultiCodes.pl` script from [FEBA](https://bitbucket.org/berkeleylab/feba/src/master/). It identifies reads containing barcodes and summarizes barcode counts in `.codes` and `.counts` files. It takes the following optional arguments:
+
+- `input_dir` - path to `fastq` files (default `./`)
+- `output_dir` (default `./`)
+- `pattern` - the file name pattern to look for (default `.fastq.gz`)
+
+To run the script with the example data, execute the following line in the terminal:
 
 ```
-source/run_MultiCodes.sh example
+source/run_MultiCodes.sh --input_dir data/example/fastq --output_dir data/example/counts
 ```
-
-Creates `.codes` and `.counts` files in `ìntermediate/example/`.
 
 #### Step 2: Combine BarSeq data and genome mappings
 
-Run the `combineBarSeq.pl` script from [FEBA](https://bitbucket.org/berkeleylab/feba/src/master/) on the project:
+This script is a wrapper for the `combineBarSeq.pl` script from  [FEBA](https://bitbucket.org/berkeleylab/feba/src/master/). It maps barcodes to genomic positions and summarizes results in a single output table (`.poolcount`) and a short report (`.colsum`). It takes the following optional arguments:
+
+- `input_dir` - path to `.counts` and `.codes` files (default `./`)
+- `output_dir` (default `./`)
+- `poolfile` - path to the pool file (default `./ref/poolfile.tsv`)
 
 ```
-source/run_combineBarSeq.sh example
+source/run_combineBarSeq.sh --input_dir data/example/counts --output_dir data/example/results
 ```
-
-Creates `.colsum` and `.poolcount` files in `results/example/`.
 
 #### Step 3: Calculate gene fitness
 
-Calculate gene fitness for the project samples using the method described in [Wetmore 2015](https://mbio.asm.org/content/6/3/e00306-15.full):
+This script calculates gene fitness using the method described in [Wetmore 2015](https://mbio.asm.org/content/6/3/e00306-15.full). 
 Note that the column for mapped gene names is currently hard-coded. This can be customized in the header of the script.
 
 ```
