@@ -55,14 +55,14 @@ CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -   
 
 #### Metadata file
 
-The tab-separated `metadata.tsv` file contains sample descriptions for the `fastq` files. The `Filename`s must match the names of the supplied files (for our example data, the files in `/data/example/fastq/`). The default location of the metadata file
+The tab-separated `metadata.tsv` file contains sample descriptions for the `fastq` files. The `Filename`s must match the names of the supplied files (for our example data, the files in `/data/example/fastq/`).
 
 ```
 Filename          ID Condition Replicate Date       Time          Reference
-01_cond1gen0_1.fast.gz     1 generic           1 2020-12-05 0 generations TRUE     
-02_cond1gen0_2.fast.gz     2 generic           2 2020-12-05 0 generations TRUE     
-03_cond1gen8_1.fast.gz     3 generic           1 2020-12-08 8 generations FALSE    
-04_cond1gen8_2.fast.gz     4 generic           2 2020-12-08 8 generations FALSE  
+01_cond1gen0_1.fast.gz     1 generic           1 2020-12-05 0 TRUE     
+02_cond1gen0_2.fast.gz     2 generic           2 2020-12-05 0 TRUE     
+03_cond1gen8_1.fast.gz     3 generic           1 2020-12-08 8 FALSE    
+04_cond1gen8_2.fast.gz     4 generic           2 2020-12-08 8 FALSE  
 ```
 
 ### Running the analysis
@@ -132,6 +132,19 @@ The columns have the following contents:
 | Significant | Significant gene if \|t\| > 4; stated on p.3 in Wetmore 2015 |
 | log2FC | log2(Counts/n0), only in gene_fitness table |
 
+----------
+
+#### Example of graphical summary
+
+Reads per gene (median of all samples)    |  Barcodes per gene
+:-------------------------:|:-------------------------:
+![](data/example/results/plot_reads_gene.png)  |  ![](data/example/results/plot_barcodes_gene.png)
+
+Reads per barcode (by sample)    |  PCA of samples
+:-------------------------:|:-------------------------:
+![](data/example/results/plot_read_count.png)  |  ![](data/example/results/plot_pca.png)
+
+----------
 
 ## Authors
 

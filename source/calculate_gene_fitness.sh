@@ -26,4 +26,5 @@ done
 Rscript source/calculate_gene_fitness.R ${result} ${poolfile} \
   ${gene_id} ${metadata} ${output_dir}
 
-# this R script performs PCA
+# this R script performs PCA and generates summary plots
+Rscript source/summary_plots.R ${result} ${output_dir}
