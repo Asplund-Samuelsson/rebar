@@ -132,7 +132,6 @@ The columns have the following contents:
 | Significant | Significant gene if \|t\| > 4; stated on p.3 in Wetmore 2015 |
 | log2FC | log2(Counts/n0), only in gene_fitness table |
 
-----------
 
 #### Example of graphical summary
 
@@ -144,7 +143,6 @@ Reads per barcode (by sample)    |  PCA of samples
 :-------------------------:|:-------------------------:
 ![](data/example/results/plot_read_count.png)  |  ![](data/example/results/plot_pca.png)
 
-----------
 
 ## Authors
 

@@ -297,8 +297,7 @@ fitness_gene <- fitness %>% distinct %>%
     Significant = unique(Significant)
   ) %>%
   # Calculate fold change
-  mutate(log2FC = log2(Counts / n0)) %>%
-  bind_rows()
+  mutate(log2FC = log2(Counts / n0))
 
 # add a dummy zero time point
 fitness_gene <- fitness_gene %>% filter(Time == unique(Time)[1]) %>%
