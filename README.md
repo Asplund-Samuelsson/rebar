@@ -135,7 +135,7 @@ The columns have the following contents:
 
 #### Example of graphical summary
 
-Reads per gene (median of all samples)    |  Barcodes per gene
+Reads per gene (sum of all barcodes)    |  Barcodes per gene
 :-------------------------:|:-------------------------:
 ![](data/example/results/plot_reads_gene.png)  |  ![](data/example/results/plot_barcodes_gene.png)
 

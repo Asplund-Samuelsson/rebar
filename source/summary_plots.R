@@ -69,11 +69,12 @@ plot_barcodes_gene <- fitness %>% ungroup %>%
 
 # QC PLOT 3: Average reads per gene (median of all samples)
 plot_reads_gene <- fitness %>%
-  group_by(locusId) %>%
-  summarize(reads_per_gene_median = median(Counts)) %>%
-  ggplot(aes(x = log2(reads_per_gene_median))) +
+  group_by(locusId, barcode) %>%
+  summarize(median_reads_per_bc = median(Counts, na.rm = TRUE), .groups = "drop_last") %>%
+  summarize(sum_reads_per_gene = sum(median_reads_per_bc, na.rm = TRUE)) %>%
+  ggplot(aes(x = log2(sum_reads_per_gene))) +
   geom_histogram(fill = custom_colors[1], alpha = 0.7) +
-  labs(x = expression("log"[2]*" reads per gene")) +
+  labs(x = expression("log"[2]*" reads per gene (sum of all barcodes)")) +
   custom_theme()
 
 
