@@ -1,0 +1,5 @@
+Filename	ID	Condition	Replicate	Date	Time	Reference
+01_cond1gen0_1.fastq.gz	1	generic	1	2020-12-05	0	TRUE
+02_cond1gen0_2.fastq.gz	2	generic	2	2020-12-05	0	TRUE
+03_cond1gen8_1.fastq.gz	3	generic	1	2020-12-08	8	FALSE
+04_cond1gen8_2.fastq.gz	4	generic	2	2020-12-08	8	FALSE
