@@ -5,5 +5,5 @@ Off	19	0	0.000
 Off	20	985095	1.000
 Off	21	0	0.000
 Off	22	0	0.000
-Wrote 109079 unique barcodes to intermediate/projects/example/01_cond1gen0_1.codes
-Wrote number of barcodes seen a certain number of times to intermediate/projects/example/01_cond1gen0_1.counts; nOnce = 64787
+Wrote 109079 unique barcodes to data/example/counts/01_cond1gen0_1.codes
+Wrote number of barcodes seen a certain number of times to data/example/counts/01_cond1gen0_1.counts; nOnce = 64787
