@@ -119,7 +119,9 @@ fplt = fplt %>%
 # Calculate fraction of variance per PC
 pcva = percent(fpca$sdev^2 / sum(fpca$sdev^2))[1:3]
 
-plot_pca = ggplot(fplt, aes(x=PC1, y=PC2, label=ID, group=Condition, colour=Date)) +
+
+plot_pca = ggplot(select(fplt, -locusId) %>% distinct, 
+  aes(x=PC1, y=PC2, label=ID, group=Condition, colour=Date)) +
   geom_line(colour="grey") +
   geom_point() +
   geom_text_repel(force=3, size=4) +
