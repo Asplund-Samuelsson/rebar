@@ -31,11 +31,11 @@ if ("central" %in% colnames(gene)) {
 gene <- gene %>% rename(locusId = all_of(gene_col)) %>%
   select(barcode, scaffold, locusId, begin, end, gene_strand, central)
 
-# optionally remove fastq.gz endings in metadat file
+# optionally remove fastq.gz endings in metadata file
 meta <- mutate(meta, Filename = gsub(".fastq.gz$", "", Filename))
 
 # Associate barcodes with the genes according to their scaffolds and positions
-barc <- left_join(barc, gene) %>%
+barc <- inner_join(barc, gene) %>%
   # Gather the counts of each sample from a column to a row
   gather(Filename, Counts, meta$Filename) %>%
   # Add metadata for samples
@@ -148,6 +148,8 @@ gfit <- bind_rows(
 # Normalization
 # Determine position in scaffold for each gene and save in Index column
 gnrm <- gene %>%
+  # Select only the necessary data for genes
+  select(locusId, scaffold, begin, end) %>% distinct %>%
   # Calculate the Middle of the gene
   mutate(Middle = (begin + end)/2) %>%
   # Order genes by the Middle position
@@ -155,19 +157,17 @@ gnrm <- gene %>%
   # For each scaffold...
   group_by(scaffold) %>%
   # ...add the Index (position) in that scaffold for every gene
-  mutate(Index = 1:length(locusId)) %>%
-  # Select only the necessary data for genes
-  select(locusId, scaffold, Index)
+  mutate(Index = 1:length(locusId))
 
 # Join genes and fitness into one table
 gnmf <- inner_join(
-  gnrm,
+  select(gnrm, locusId, scaffold, Index),
   # Create a table with the distinct gene fitness value for each sample and gene
   select(gfit, locusId, ID, Gene_fitness) %>% distinct()
 )
 
 # Create a table with windows on which to calculate local medians
-wind <- gnrm %>%
+wind <- select(gnrm, locusId, scaffold, Index) %>%
   group_by(locusId, scaffold) %>%
   mutate(Window = list((Index-125):(Index+125))) %>%
   unnest(Window) %>%
@@ -213,13 +213,9 @@ gfit <- inner_join(gfit, select(gnmf, scaffold, locusId, ID, Norm_fg))
 
 # t-like test statistic
 # Genes without at least 15 time-zero reads on each side are excluded
-gmid <- gene %>%
-  select(locusId, scaffold, begin, end) %>%
-  mutate(Middle = (end + begin)/2) %>%
-  select(-begin, -end)
 
 # Estimate a priori noise in gene fitness
-side <- inner_join(bar0, gmid) %>%
+side <- inner_join(bar0, select(gnrm, locusId, scaffold, Middle)) %>%
   # Determine which side of the middle each insertion site is located
   mutate(Side = ifelse(pos < Middle, "Left", "Right")) %>%
   # Ensure that at least 15 reads are found on the each side
@@ -289,7 +285,7 @@ fitness <- fitness %>%
   )
 
 # Make gene-centric fitness table
-fitness_gene <- fitness %>% distinct %>%
+fitness_gene <- fitness %>%
   group_by(locusId, scaffold, Date, Time, ID, Condition, Replicate, Strains_per_gene) %>%
   summarise(
     Counts = sum(Counts), n0 = sum(n0),
