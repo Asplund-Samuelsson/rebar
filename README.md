@@ -111,26 +111,28 @@ source/calculate_gene_fitness.sh --result data/example/results/result.poolcount 
   --output_dir data/example/results/
 ```
 
-Expected output are result tables in memory-efficient `.Rdata` format and summary plots in `.png` and `.pdf` format. The two tables are `fitness.Rdata` for all strains (barcodes), including data per gene (columns `Strains_per_gene`, `Norm_fg`, `t`, `Significant`), and `gene_fitness.Rdata` for gene fitness data only (columns `Counts` and `n0` are summed over all strains [barcodes] for each gene, column `log2FC` is log2(`Counts`/`n0`)).
+Expected output are result tables in memory-efficient `.Rdata` format and summary plots in `.png` and `.pdf` format. The two tables are `fitness.Rdata` for all strains (barcodes), including data per gene (columns `Strains_per_gene`, `Norm_fg`, `t`, `Significant`), and `fitness_gene.Rdata` for gene fitness data only (columns `Counts` and `n0` are summed over all strains [barcodes] for each gene, column `log2FC` is log2(`Counts`/`n0`)).
 
 The columns have the following contents:
 
 | Column | Description |
 | ------ | ----------- |
-| barcode | Barcode sequence |
+| barcode | Barcode sequence (not in fitness_gene table) |
 | locusId | Locus ID (gene name) |
-| scaffoldId | Name of DNA molecule |
+| scaffold | Name of DNA molecule |
 | Date | Sample date batch; Variable connecting samples to t0 samples |
-| Sample | Sample name |
+| Time | Timepoint |
+| ID | Sample ID |
 | Condition | Growth condition |
-| Counts | Read count for strain (barcode) in sample (summed per gene in gene_fitness table) |
+| Replicate | Replicate ID |
+| Counts | Read count for strain (barcode) in sample (summed per gene in fitness_gene table) |
 | n0 | Read count in corresponding t0 samples |
 | Strains_per_gene | Number of strains (barcodes) for the current locusId |
-| Strain_fitness | Strain (barcode) fitness; f_s on p.12 in Wetmore 2015 |
+| Strain_fitness | Strain (barcode) fitness (not in fitness_gene table); f_s on p.12 in Wetmore 2015 |
 | Norm_fg | Normalized gene fitness; (iii) on p.13 in Wetmore 2015 |
 | t | t-like test statistic; calculated on p.13 in Wetmore 2015 |
 | Significant | Significant gene if \|t\| > 4; stated on p.3 in Wetmore 2015 |
-| log2FC | log2(Counts/n0), only in gene_fitness table |
+| log2FC | log2(Counts/n0), only in fitness_gene table |
 
 
 #### Example of graphical summary

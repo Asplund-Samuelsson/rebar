@@ -446,19 +446,19 @@ bcl2fastq --no-lane-splitting</code></pre>
 <h4>Pool file</h4>
 <p>The pool file describes TnSeq mappings, and is obtained as output from the <a href="https://github.com/m-jahn/TnSeq-pipe">TnSeq pipeline</a>. It has the following structure. Note that the column for gene IDs is currently named <code>old_locus_tag</code>, this can customized if needed. The default location for pool files is <code>ref/</code>.</p>
 <pre><code>barcode  rcbarcode  nTot     n scaffold strand    pos   begin     end gene_strand desc  old_locus_tag new_locus_tag gene_length pos_relative central
-CAGAAGA… CCCCGCCC…     1     1 NC_0083… +      1.02e6 1014705 1015328 -           gene  H16_B0896     H16_RS23215           623        0.475 TRUE   
-CTGTTGG… ACCAACCC…     1     1 NC_0083… +      3.12e6 3118049 3119266 +           gene  H16_A2889     H16_RS14395          1217        0.411 TRUE   
-AGCCGCG… GTCCCCCT…     1     1 NC_0083… -      3.44e6 3442926 3443798 -           gene  H16_A3183     H16_RS15875           872        0.861 TRUE   
-CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -           gene  H16_A3206     H16_RS34325           524        0.960 FALSE  
+CAGAAGA… CCCCGCCC…     1     1 NC_0083… +      1.02e6 1014705 1015328 -           gene  H16_B0896     H16_RS23215           623        0.475 TRUE
+CTGTTGG… ACCAACCC…     1     1 NC_0083… +      3.12e6 3118049 3119266 +           gene  H16_A2889     H16_RS14395          1217        0.411 TRUE
+AGCCGCG… GTCCCCCT…     1     1 NC_0083… -      3.44e6 3442926 3443798 -           gene  H16_A3183     H16_RS15875           872        0.861 TRUE
+CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -           gene  H16_A3206     H16_RS34325           524        0.960 FALSE
 ...</code></pre>
 </div>
 <div id="metadata-file" class="section level4">
 <h4>Metadata file</h4>
 <p>The tab-separated <code>metadata.tsv</code> file contains sample descriptions for the <code>fastq</code> files. The <code>Filename</code>s must match the names of the supplied files (for our example data, the files in <code>/data/example/fastq/</code>).</p>
 <pre><code>Filename          ID Condition Replicate Date       Time          Reference
-01_cond1gen0_1.fast.gz     1 generic           1 2020-12-05 0 TRUE     
-02_cond1gen0_2.fast.gz     2 generic           2 2020-12-05 0 TRUE     
-03_cond1gen8_1.fast.gz     3 generic           1 2020-12-08 8 FALSE    
+01_cond1gen0_1.fast.gz     1 generic           1 2020-12-05 0 TRUE
+02_cond1gen0_2.fast.gz     2 generic           2 2020-12-05 0 TRUE
+03_cond1gen8_1.fast.gz     3 generic           1 2020-12-08 8 FALSE
 04_cond1gen8_2.fast.gz     4 generic           2 2020-12-08 8 FALSE  </code></pre>
 </div>
 </div>
@@ -500,7 +500,7 @@ CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -   
   --gene_id old_locus_tag \
   --metadata data/example/fastq/metadata.tsv \
   --output_dir data/example/results/</code></pre>
-<p>Expected output are result tables in memory-efficient <code>.Rdata</code> format and summary plots in <code>.png</code> and <code>.pdf</code> format. The two tables are <code>fitness.Rdata</code> for all strains (barcodes), including data per gene (columns <code>Strains_per_gene</code>, <code>Norm_fg</code>, <code>t</code>, <code>Significant</code>), and <code>gene_fitness.Rdata</code> for gene fitness data only (columns <code>Counts</code> and <code>n0</code> are summed over all strains [barcodes] for each gene, column <code>log2FC</code> is log2(<code>Counts</code>/<code>n0</code>)).</p>
+<p>Expected output are result tables in memory-efficient <code>.Rdata</code> format and summary plots in <code>.png</code> and <code>.pdf</code> format. The two tables are <code>fitness.Rdata</code> for all strains (barcodes), including data per gene (columns <code>Strains_per_gene</code>, <code>Norm_fg</code>, <code>t</code>, <code>Significant</code>), and <code>fitness_gene.Rdata</code> for gene fitness data only (columns <code>Counts</code> and <code>n0</code> are summed over all strains [barcodes] for each gene, column <code>log2FC</code> is log2(<code>Counts</code>/<code>n0</code>)).</p>
 <p>The columns have the following contents:</p>
 <table>
 <colgroup>
@@ -516,14 +516,14 @@ CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -   
 <tbody>
 <tr class="odd">
 <td>barcode</td>
-<td>Barcode sequence</td>
+<td>Barcode sequence (not in fitness_gene table)</td>
 </tr>
 <tr class="even">
 <td>locusId</td>
 <td>Locus ID (gene name)</td>
 </tr>
 <tr class="odd">
-<td>scaffoldId</td>
+<td>scaffold</td>
 <td>Name of DNA molecule</td>
 </tr>
 <tr class="even">
@@ -531,16 +531,24 @@ CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -   
 <td>Sample date batch; Variable connecting samples to t0 samples</td>
 </tr>
 <tr class="odd">
-<td>Sample</td>
-<td>Sample name</td>
+<td>Time</td>
+<td>Timepoint</td>
 </tr>
 <tr class="even">
+<td>ID</td>
+<td>Sample ID</td>
+</tr>
+<tr class="odd">
 <td>Condition</td>
 <td>Growth condition</td>
 </tr>
+<tr class="even">
+<td>Replicate</td>
+<td>Replicate ID</td>
+</tr>
 <tr class="odd">
 <td>Counts</td>
-<td>Read count for strain (barcode) in sample (summed per gene in gene_fitness table)</td>
+<td>Read count for strain (barcode) in sample (summed per gene in fitness_gene table)</td>
 </tr>
 <tr class="even">
 <td>n0</td>
@@ -552,7 +560,7 @@ CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -   
 </tr>
 <tr class="even">
 <td>Strain_fitness</td>
-<td>Strain (barcode) fitness; f_s on p.12 in Wetmore 2015</td>
+<td>Strain (barcode) fitness (not in fitness_gene table); f_s on p.12 in Wetmore 2015</td>
 </tr>
 <tr class="odd">
 <td>Norm_fg</td>
@@ -568,7 +576,7 @@ CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -   
 </tr>
 <tr class="even">
 <td>log2FC</td>
-<td>log2(Counts/n0), only in gene_fitness table</td>
+<td>log2(Counts/n0), only in fitness_gene table</td>
 </tr>
 </tbody>
 </table>
