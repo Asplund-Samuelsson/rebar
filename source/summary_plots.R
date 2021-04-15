@@ -44,13 +44,22 @@ custom_theme <- function(base_size = 12, base_line_size = 1.0, base_rect_size = 
     panel.border = element_rect(linetype = "solid", colour = grey(0.4), fill = NA, size = 1.0),
     panel.background = element_blank(),
     strip.background = element_rect(fill = grey(0.4), colour = grey(0.4)),
-    strip.text = element_text(colour = "white", size = 10, margin = unit(rep(3,4), "points")),
+    strip.text = element_text(colour = "white", size = 10, margin = unit(rep(1,4), "points")),
     legend.text = element_text(colour = grey(0.4), size = 10),
     legend.title = element_text(colour = grey(0.4), size = 10),
   )
 }
 
-# QC PLOT 1: Number of reads per barcode/mutant, per sample
+# QC PLOT: Total number of mapped reads per sample
+plot_total_mapped_reads <- df_counts %>%
+  group_by(sample) %>% summarize(n_reads = sum(n_reads)) %>%
+  ggplot(aes(x = sample, y = n_reads)) +
+  coord_flip() +
+  geom_col(fill = custom_colors[1], alpha = 0.7) +
+  labs(x = "", y = "total number of mapped reads") +
+  custom_theme()
+
+# QC PLOT: Number of reads per barcode/mutant, per sample
 plot_read_count <- df_counts %>%
   ggplot(aes(x = log2(n_reads))) +
   geom_histogram(fill = custom_colors[1], alpha = 0.7) +
@@ -58,7 +67,18 @@ plot_read_count <- df_counts %>%
   facet_wrap(~ sample) +
   custom_theme()
 
-# QC PLOT 2: Number of barcodes/mutants per gene
+# QC PLOT: top 20 most abundant barcodes, per sample
+plot_top_barcodes <- df_counts %>%
+  group_by(sample) %>% arrange(sample, desc(n_reads)) %>% 
+  mutate(rank = seq_along(barcode)) %>%
+  filter(between(rank, 1, 10)) %>%
+  ggplot(aes(x = factor(rank), y = n_reads)) +
+  geom_col(fill = custom_colors[1], alpha = 0.7, width =1) +
+  labs(y = "n reads", x = "barcode ranked by abundance") +
+  facet_wrap(~ sample) +
+  custom_theme()
+
+# QC PLOT: Number of barcodes/mutants per gene
 plot_barcodes_gene <- fitness %>% ungroup %>%
   select(locusId, Strains_per_gene) %>%
   distinct %>% filter(Strains_per_gene < 40) %>%
@@ -67,7 +87,7 @@ plot_barcodes_gene <- fitness %>% ungroup %>%
   labs(x = "barcodes/mutants per gene") +
   custom_theme()
 
-# QC PLOT 3: Average reads per gene (median of all samples)
+# QC PLOT: Average reads per gene (median of all samples)
 plot_reads_gene <- fitness %>%
   group_by(locusId, barcode) %>%
   summarize(median_reads_per_bc = median(Counts, na.rm = TRUE), .groups = "drop_last") %>%
