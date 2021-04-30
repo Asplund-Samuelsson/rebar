@@ -32,12 +32,12 @@ gene <- gene %>% rename(locusId = all_of(gene_col)) %>%
   select(barcode, scaffold, locusId, begin, end, gene_strand, central)
 
 # optionally remove fastq.gz endings in metadata file
-meta <- mutate(meta, Filename = gsub(".fastq.gz$", "", Filename))
+meta <- mutate(meta, file_name = gsub(".fastq.gz$", "", file_name))
 
 # Associate barcodes with the genes according to their scaffolds and positions
 barc <- inner_join(barc, gene) %>%
   # Gather the counts of each sample from a column to a row
-  gather(Filename, Counts, meta$Filename) %>%
+  gather(file_name, counts, meta$file_name) %>%
   # Add metadata for samples
   left_join(meta)
 
@@ -46,22 +46,22 @@ barc <- inner_join(barc, gene) %>%
 # - 30 reads per gene
 bar0 <- barc %>%
   # Filter time-zero samples
-  filter(Reference) %>%
+  filter(group == reference_group) %>%
   # Sum per-strain counts across all replicate time-zero samples for each condition
-  group_by(barcode, Condition) %>%
-  mutate(n0 = sum(Counts)) %>%
+  group_by(barcode, condition) %>%
+  mutate(n0 = sum(counts)) %>%
   # At least 3 reads for each strain
   filter(n0 >= 3) %>%
   # At least 30 reads for each gene
-  group_by(locusId, Condition) %>%
+  group_by(locusId, condition) %>%
   filter(sum(n0) >= 30)
 
 
 # Filter to only the adequate barcodes in the barcode pool
 barc <- left_join(barc, bar0 %>% ungroup %>% 
-    select(barcode, locusId, Condition, n0) %>% distinct) %>%
+    select(barcode, locusId, condition, n0) %>% distinct) %>%
   # Remove time-zero since it is now included as the variable n0
-  filter(!is.na(n0), !Reference)
+  filter(!is.na(n0), !(group == reference_group))
 
 # Function to calculate strain variance
 strain_variance <- function(n, n0){(1/(1+n)+1/(1+n0))/(log(2)^2)}
@@ -73,9 +73,9 @@ Weight_max <- 1/strain_variance(20, 20)
 # sample and the reference time-zero sample.
 # Gene fitness is the weighted average of the strain fitness.
 gfit <- barc %>%
-  select(barcode, locusId, Date, Condition, Counts, ID, n0) %>%
+  select(barcode, locusId, date, condition, counts, ID, n0) %>%
   # Calculate strain variance
-  mutate(Strain_variance = strain_variance(Counts, n0)) %>%
+  mutate(Strain_variance = strain_variance(counts, n0)) %>%
   # The gene fitness is the weighted average of the strain fitness
   # Calculate the weight of each barcode
   # Set a ceiling on the weight, being that of a strain with 20 reads in each sample
@@ -90,31 +90,31 @@ gfit <- barc %>%
   group_by(locusId) %>%
   # Count the number of strains in each gene
   # (the number of barcodes inserted in each gene)
-  mutate(Strains_per_gene = n_distinct(barcode)) %>%
+  mutate(strains_per_gene = n_distinct(barcode)) %>%
   # Sum counts and n0 over all strains in all genes
   ungroup() %>%
-  mutate(Sum_nafter = sum(Counts)) %>%
+  mutate(Sum_nafter = sum(counts)) %>%
   mutate(Sum_n0 = sum(n0))
 
 # Function to calculate strain fitness
-strain_fitness <- function(n, p, n0){log2(n + sqrt(p)) - log2(n0 + sqrt(1/p))}
+calc_strain_fitness <- function(n, p, n0){log2(n + sqrt(p)) - log2(n0 + sqrt(1/p))}
 
 # Calculate gene fitness for genes with different strain counts separately
 # For genes with only 1 or 2 strains:
-gLT3 <- filter(gfit, Strains_per_gene < 3) %>%
+gLT3 <- filter(gfit, strains_per_gene < 3) %>%
   # The gene factor is one, and pseudocount will be Sum_nafter/Sum_n0
   mutate(Pseudocounts = 1 * Sum_nafter/Sum_n0) %>%
   # Calculate strain fitness
-  mutate(Strain_fitness = strain_fitness(Counts, Pseudocounts, n0)) %>%
+  mutate(strain_fitness = calc_strain_fitness(counts, Pseudocounts, n0)) %>%
   # Calculate weighted gene fitness
   group_by(ID, locusId) %>%
-  mutate(Gene_fitness = sum(Weight * Strain_fitness)/sum(Weight))
+  mutate(Gene_fitness = sum(Weight * strain_fitness)/sum(Weight))
 
 # For genes with more than 2 strains:
-gGE3 <- filter(gfit, Strains_per_gene >= 3) %>%
+gGE3 <- filter(gfit, strains_per_gene >= 3) %>%
   # Calculate a preliminary fitness per strain
   group_by(ID, locusId) %>%
-  mutate(Pre_strain_fitness = strain_fitness(Counts, 1, n0)) %>%
+  mutate(Pre_strain_fitness = calc_strain_fitness(counts, 1, n0)) %>%
   # Calcalate preliminary fitness per gene as median of strains
   mutate(Pre_gene_fitness = median(Pre_strain_fitness))
 
@@ -131,9 +131,9 @@ gGE3 <- gGE3  %>%
   # Calculate pseudocounts using the gene factor 2 ^ Pre_gene_fitness
   mutate(Pseudocounts = (2^Pre_gene_fitness) * (Sum_nafter/Sum_n0)) %>%
   # Calculate strain fitness
-  mutate(Strain_fitness = strain_fitness(Counts, Pseudocounts, n0)) %>%
+  mutate(strain_fitness = calc_strain_fitness(counts, Pseudocounts, n0)) %>%
   # Calculate weighted gene fitness
-  mutate(Gene_fitness = sum(Weight * Strain_fitness)/sum(Weight))
+  mutate(Gene_fitness = sum(Weight * strain_fitness)/sum(Weight))
 
 # Concatenate the two tables of genes with different number of strains
 gfit <- bind_rows(
@@ -205,11 +205,11 @@ gnmf <- gnmf %>%
   arrange(Index) %>%
   mutate(
     Mode = get_mode(Norm_fg_0),
-    Norm_fg = Norm_fg_0 - Mode
+    norm_gene_fitness = Norm_fg_0 - Mode
   )
 
 # Add the normalized gene fitness score to the original table
-gfit <- inner_join(gfit, select(gnmf, scaffold, locusId, ID, Norm_fg))
+gfit <- inner_join(gfit, select(gnmf, scaffold, locusId, ID, norm_gene_fitness))
 
 # t-like test statistic
 # Genes without at least 15 time-zero reads on each side are excluded
@@ -219,13 +219,13 @@ side <- inner_join(bar0, select(gnrm, locusId, scaffold, Middle)) %>%
   # Determine which side of the middle each insertion site is located
   mutate(Side = ifelse(pos < Middle, "Left", "Right")) %>%
   # Ensure that at least 15 reads are found on the each side
-  select(barcode, locusId, Condition, Side, n0) %>%
+  select(barcode, locusId, condition, Side, n0) %>%
   distinct() %>%
-  group_by(locusId, Condition, Side) %>%
+  group_by(locusId, condition, Side) %>%
   filter(sum(n0) >= 15) %>%
   ungroup() %>%
   select(-n0) %>%
-  group_by(locusId, Condition) %>%
+  group_by(locusId, condition) %>%
   # Make sure that both sides are present (both side have at least 15 reads)
   mutate(Both = n_distinct(Side)) %>%
   filter(Both == 2) %>%
@@ -235,7 +235,7 @@ side <- inner_join(bar0, select(gnrm, locusId, scaffold, Middle)) %>%
   inner_join(gfit) %>%
   # Calculate the median fitness on each side
   group_by(locusId, Side) %>%
-  summarise(Median_side = median(Strain_fitness)) %>%
+  summarise(Median_side = median(strain_fitness)) %>%
   # Spread sides into two columns (Left and Right)
   spread(Side, Median_side) %>%
   # Calculate the absolute difference between the sides
@@ -249,7 +249,7 @@ Vt <- (mad12^2)/((2*0.674)^2)
 
 # Calculate the naive strain variance Vn for all strains
 gfit <- gfit %>%
-  mutate(Vn = strain_variance(Counts, n0))
+  mutate(Vn = strain_variance(counts, n0))
 
 # Calculate the median Vn across genes use to calculate Vt, for each sample
 medv <- gfit %>%
@@ -267,38 +267,38 @@ fitness <- gfit %>%
   group_by(ID, locusId) %>%
   mutate(Vg = Vt * Vn/Median_Vn) %>%
   # Calculate the weighted sum of squared differences between fi and fg
-  mutate(Vi = Weight * (Strain_fitness - Norm_fg)^2) %>%
+  mutate(Vi = Weight * (strain_fitness - norm_gene_fitness)^2) %>%
   # Calculate the estimated variance Ve
-  mutate(Ve = (sum(Vi)/sum(Weight) + Vg) / Strains_per_gene) %>%
+  mutate(Ve = (sum(Vi)/sum(Weight) + Vg) / strains_per_gene) %>%
   # Calculate the t statistic
-  mutate(t = Norm_fg/sqrt(0.1^2 + max(Ve, Vn))) %>%
+  mutate(t = norm_gene_fitness/sqrt(0.1^2 + max(Ve, Vn))) %>%
   # If the absolute value of t is greater than 4 the fitness is significant
-  mutate(Significant = as.numeric(abs(t) > 4))
+  mutate(significant = as.numeric(abs(t) > 4))
 
 # Clean up fitness table
 fitness <- fitness %>%
   # merge with missing metadata columns
-  left_join(select(meta, -Filename, -Reference)) %>%
+  left_join(select(meta, -file_name, -group, -reference_group)) %>%
   select(
-    barcode, locusId, scaffold, Date, Time, ID, Condition, Replicate, Counts, n0,
-    Strains_per_gene, Strain_fitness, Norm_fg, t, Significant
+    barcode, locusId, scaffold, date, time, ID, condition, replicate, counts, n0,
+    strains_per_gene, strain_fitness, norm_gene_fitness, t, significant
   )
 
 # Make gene-centric fitness table
 fitness_gene <- fitness %>%
-  group_by(locusId, scaffold, Date, Time, ID, Condition, Replicate, Strains_per_gene) %>%
+  group_by(locusId, scaffold, date, time, ID, condition, replicate, strains_per_gene) %>%
   summarise(
-    Counts = sum(Counts), n0 = sum(n0),
-    Norm_fg = unique(Norm_fg), t = unique(t),
-    Significant = unique(Significant)
+    counts = sum(counts), n0 = sum(n0),
+    norm_gene_fitness = unique(norm_gene_fitness), t = unique(t),
+    significant = unique(significant)
   ) %>%
   # Calculate fold change
-  mutate(log2FC = log2(Counts / n0))
+  mutate(log2FC = log2(counts / n0))
 
 # add a dummy zero time point
-fitness_gene <- fitness_gene %>% filter(Time == unique(Time)[1]) %>%
-  mutate(Counts = n0, .keep = "unused") %>%
-  mutate(log2FC = 0, Time = 0, Norm_fg = 0, t = 0, Significant = 0) %>%
+fitness_gene <- fitness_gene %>% filter(time == unique(time)[1]) %>%
+  mutate(counts = n0, .keep = "unused") %>%
+  mutate(log2FC = 0, time = 0, norm_gene_fitness = 0, t = 0, significant = 0) %>%
   bind_rows(select(fitness_gene, -n0))
 
 
