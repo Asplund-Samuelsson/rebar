@@ -45,18 +45,18 @@ Before starting, a **pool file**, a **metadata** file, and gzipped **`fastq` fil
 The pool file describes TnSeq mappings, and is obtained as output from the [TnSeq pipeline](https://github.com/m-jahn/TnSeq-pipe). It has the following structure. Note that the column for gene IDs is currently named `old_locus_tag`, this can be customized if needed (see section "Calculate fitness"). The default location for pool files is `ref/`.
 
 ```
-barcode rcbarcode  nTot     n scaffold strand    pos   begin     end gene_strand desc  locusId new_locu...
-CAGAAG… CCCCGCCC…     1     1 NC_0083… +      1.02e6 1014705 1015328 -           gene  H16_B0… H16_RS23215  
-CTGTTG… ACCAACCC…     1     1 NC_0083… +      3.12e6 3118049 3119266 +           gene  H16_A2… H16_RS14395  
-AGCCGC… GTCCCCCT…     1     1 NC_0083… -      3.44e6 3442926 3443798 -           gene  H16_A3… H16_RS15875  
-CGTCAT… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -           gene  H16_A3… H16_RS34325  
-CAGCAG… CGCCGAAC…     2     2 NC_0083… -      2.50e6 2495842 2499936 -           gene  H16_B2… H16_RS29710  
+barcode rcbarcode  nTot     n scaffold strand    pos   begin     end gene_strand desc  old_locus_tag new_locu…
+CAGAAG… CCCCGCCC…     1     1 NC_0083… +      1.02e6 1014705 1015328 -           gene  H16_B0896     H16_RS23…  
+CTGTTG… ACCAACCC…     1     1 NC_0083… +      3.12e6 3118049 3119266 +           gene  H16_A2889     H16_RS14…  
+AGCCGC… GTCCCCCT…     1     1 NC_0083… -      3.44e6 3442926 3443798 -           gene  H16_A3183     H16_RS15…  
+CGTCAT… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -           gene  H16_A3206     H16_RS34…  
+CAGCAG… CGCCGAAC…     2     2 NC_0083… -      2.50e6 2495842 2499936 -           gene  H16_B2203     H16_RS29…  
 ...
 ```
 
 #### Metadata file
 
-The tab-separated `metadata.tsv` file contains sample descriptions for the `fastq` files. The `file_name`s must match the names of the supplied files (for our example data, the files in `/data/example/fastq/`). The `group` and `reference_group` columns specify which comaprison between sample groups should be made (e.g. group 2 vs reference 1).
+The tab-separated `metadata.tsv` file contains sample descriptions for the `fastq` files. The `file_name`s must match the names of the supplied files (for our example data, the files in `/data/example/fastq/`). The `group` and `reference_group` columns specify which comparisons between sample groups should be made (e.g. group 2 vs reference 1).
 
 ```
 file_name                  ID condition replicate date        time group reference_group
@@ -103,6 +103,7 @@ This script calculates gene fitness using the method described in [Wetmore 2015]
 - `gene_id` - name of the column containing gene IDs in the pool file
 - `metadata` - path to the metadata file (default: `./data/example/fastq/metadata.tsv`)
 - `output_dir` (default `./`)
+- `deseq` - use Deseq2 instead of method from Wetmore et. al. (`0`/`1`, default: `0`)
 
 ```
 source/calculate_gene_fitness.sh --result data/example/results/result.poolcount \
@@ -112,7 +113,7 @@ source/calculate_gene_fitness.sh --result data/example/results/result.poolcount 
   --output_dir data/example/results/
 ```
 
-Expected output are result tables in memory-efficient `.Rdata` format and summary plots in `.png` and `.pdf` format. The two tables are `fitness.Rdata` for all strains (barcodes), including data per gene (columns `strains_per_gene`, `norm_gene_fitness`, `t`, `significant`), and `fitness_gene.Rdata` for gene fitness data only (columns `counts` and `n0` are summed over all strains [barcodes] for each gene, column `log2FC` is log2(`Counts`/`n0`)).
+Expected output are result tables in memory-efficient `.Rdata` format and summary plots in `.png` and `.pdf` format. The two tables are `fitness.Rdata` for all strains (barcodes), including data per gene (columns `strains_per_gene`, `norm_gene_fitness`, `t`, `significant`), and `fitness_gene.Rdata` for gene fitness data only (columns `counts` and `n0` are summed over all strains [barcodes] for each gene, column `log2FC` is log2(`Counts`/`n0`)). Note: The output when using `--deseq 1` is similar to the default but slightly different. DESeq2 summarizes abundance of replicates to mean log2FC, fitness, and p-values per condition. Columns `replicate` and `n0` are not contained in the output and `strain_fitness`/`norm_gene_fitness` is calculated over all time points.
 
 The columns have the following contents:
 
