@@ -44,13 +44,22 @@ custom_theme <- function(base_size = 12, base_line_size = 1.0, base_rect_size = 
     panel.border = element_rect(linetype = "solid", colour = grey(0.4), fill = NA, size = 1.0),
     panel.background = element_blank(),
     strip.background = element_rect(fill = grey(0.4), colour = grey(0.4)),
-    strip.text = element_text(colour = "white", size = 10, margin = unit(rep(3,4), "points")),
+    strip.text = element_text(colour = "white", size = 10, margin = unit(rep(1,4), "points")),
     legend.text = element_text(colour = grey(0.4), size = 10),
     legend.title = element_text(colour = grey(0.4), size = 10),
   )
 }
 
-# QC PLOT 1: Number of reads per barcode/mutant, per sample
+# QC PLOT: Total number of mapped reads per sample
+plot_total_mapped_reads <- df_counts %>%
+  group_by(sample) %>% summarize(n_reads = sum(n_reads)) %>%
+  ggplot(aes(x = sample, y = n_reads)) +
+  coord_flip() +
+  geom_col(fill = custom_colors[1], alpha = 0.7) +
+  labs(x = "", y = "total number of mapped reads") +
+  custom_theme()
+
+# QC PLOT: Number of reads per barcode/mutant, per sample
 plot_read_count <- df_counts %>%
   ggplot(aes(x = log2(n_reads))) +
   geom_histogram(fill = custom_colors[1], alpha = 0.7) +
@@ -58,19 +67,30 @@ plot_read_count <- df_counts %>%
   facet_wrap(~ sample) +
   custom_theme()
 
-# QC PLOT 2: Number of barcodes/mutants per gene
+# QC PLOT: top 20 most abundant barcodes, per sample
+plot_top_barcodes <- df_counts %>%
+  group_by(sample) %>% arrange(sample, desc(n_reads)) %>% 
+  mutate(rank = seq_along(barcode)) %>%
+  filter(between(rank, 1, 10)) %>%
+  ggplot(aes(x = factor(rank), y = n_reads)) +
+  geom_col(fill = custom_colors[1], alpha = 0.7, width =1) +
+  labs(y = "n reads", x = "barcode ranked by abundance") +
+  facet_wrap(~ sample) +
+  custom_theme()
+
+# QC PLOT: Number of barcodes/mutants per gene
 plot_barcodes_gene <- fitness %>% ungroup %>%
-  select(locusId, Strains_per_gene) %>%
-  distinct %>% filter(Strains_per_gene < 40) %>%
-  ggplot(aes(x = Strains_per_gene)) +
+  select(locusId, strains_per_gene) %>%
+  distinct %>% filter(strains_per_gene < 40) %>%
+  ggplot(aes(x = strains_per_gene)) +
   geom_histogram(fill = custom_colors[1], alpha = 0.7) +
   labs(x = "barcodes/mutants per gene") +
   custom_theme()
 
-# QC PLOT 3: Average reads per gene (median of all samples)
+# QC PLOT: Average reads per gene (median of all samples)
 plot_reads_gene <- fitness %>%
   group_by(locusId, barcode) %>%
-  summarize(median_reads_per_bc = median(Counts, na.rm = TRUE), .groups = "drop_last") %>%
+  summarize(median_reads_per_bc = median(counts, na.rm = TRUE), .groups = "drop_last") %>%
   summarize(sum_reads_per_gene = sum(median_reads_per_bc, na.rm = TRUE)) %>%
   ggplot(aes(x = log2(sum_reads_per_gene))) +
   geom_histogram(fill = custom_colors[1], alpha = 0.7) +
@@ -83,14 +103,14 @@ plot_reads_gene <- fitness %>%
 
 # Reduce information
 fitness = fitness %>%
-  select(locusId, Date, Condition, ID, Norm_fg, t, Significant) %>%
+  select(locusId, date, condition, ID, norm_gene_fitness) %>%
   distinct() %>%
   mutate(ID = as.character(ID))
 
 # Log-transform and center the data
-wide = fitness %>%
-  select(locusId, ID, Norm_fg) %>%
-  spread(ID, Norm_fg) %>%
+wide = fitness %>% group_by(locusId) %>%
+  select(locusId, ID, norm_gene_fitness) %>%
+  spread(ID, norm_gene_fitness) %>%
   as.data.frame() %>%
   na.omit()
 
@@ -114,7 +134,7 @@ fplt = fplt %>%
   as_tibble() %>%
   select(ID, PC1, PC2) %>%
   inner_join(
-    select(fitness, locusId, Date, Condition, ID) %>% 
+    select(fitness, locusId, date, condition, ID) %>% 
       distinct(), by = "ID")
 
 # Calculate fraction of variance per PC
@@ -122,13 +142,13 @@ pcva = percent(fpca$sdev^2 / sum(fpca$sdev^2))[1:3]
 
 
 plot_pca = ggplot(select(fplt, -locusId) %>% distinct, 
-  aes(x=PC1, y=PC2, label=ID, group=Condition, colour=Date)) +
-  geom_line(colour="grey") +
+  aes(x = PC1, y = PC2, label = ID, group = condition, colour = date)) +
+  geom_line(colour = "grey") +
   geom_point() +
-  geom_text_repel(force=3, size=4) +
+  geom_text_repel(force = 3, size = 4) +
   labs(
-    x=paste("PC1 (", pcva[1], ")", sep=""),
-    y=paste("PC2 (", pcva[2], ")", sep="")
+    x = paste("PC1 (", pcva[1], ")", sep = ""),
+    y = paste("PC2 (", pcva[2], ")", sep = "")
   ) +
   custom_theme()
 

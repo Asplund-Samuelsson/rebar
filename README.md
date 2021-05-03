@@ -42,27 +42,28 @@ Before starting, a **pool file**, a **metadata** file, and gzipped **`fastq` fil
 
 #### Pool file
 
-The pool file describes TnSeq mappings, and is obtained as output from the [TnSeq pipeline](https://github.com/m-jahn/TnSeq-pipe). It has the following structure. Note that the column for gene IDs is currently named `old_locus_tag`, this can customized if needed. The default location for pool files is `ref/`.
+The pool file describes TnSeq mappings, and is obtained as output from the [TnSeq pipeline](https://github.com/m-jahn/TnSeq-pipe). It has the following structure. Note that the column for gene IDs is currently named `old_locus_tag`, this can be customized if needed (see section "Calculate fitness"). The default location for pool files is `ref/`.
 
 ```
-barcode  rcbarcode  nTot     n scaffold strand    pos   begin     end gene_strand desc  old_locus_tag new_locus_tag gene_length pos_relative central
-CAGAAGA… CCCCGCCC…     1     1 NC_0083… +      1.02e6 1014705 1015328 -           gene  H16_B0896     H16_RS23215           623        0.475 TRUE   
-CTGTTGG… ACCAACCC…     1     1 NC_0083… +      3.12e6 3118049 3119266 +           gene  H16_A2889     H16_RS14395          1217        0.411 TRUE   
-AGCCGCG… GTCCCCCT…     1     1 NC_0083… -      3.44e6 3442926 3443798 -           gene  H16_A3183     H16_RS15875           872        0.861 TRUE   
-CGTCATG… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -           gene  H16_A3206     H16_RS34325           524        0.960 FALSE  
+barcode rcbarcode  nTot     n scaffold strand    pos   begin     end gene_strand desc  old_locus_tag new_locu…
+CAGAAG… CCCCGCCC…     1     1 NC_0083… +      1.02e6 1014705 1015328 -           gene  H16_B0896     H16_RS23…  
+CTGTTG… ACCAACCC…     1     1 NC_0083… +      3.12e6 3118049 3119266 +           gene  H16_A2889     H16_RS14…  
+AGCCGC… GTCCCCCT…     1     1 NC_0083… -      3.44e6 3442926 3443798 -           gene  H16_A3183     H16_RS15…  
+CGTCAT… CCACCGCT…     1     1 NC_0083… +      3.46e6 3464096 3464620 -           gene  H16_A3206     H16_RS34…  
+CAGCAG… CGCCGAAC…     2     2 NC_0083… -      2.50e6 2495842 2499936 -           gene  H16_B2203     H16_RS29…  
 ...
 ```
 
 #### Metadata file
 
-The tab-separated `metadata.tsv` file contains sample descriptions for the `fastq` files. The `Filename`s must match the names of the supplied files (for our example data, the files in `/data/example/fastq/`).
+The tab-separated `metadata.tsv` file contains sample descriptions for the `fastq` files. The `file_name`s must match the names of the supplied files (for our example data, the files in `/data/example/fastq/`). The `group` and `reference_group` columns specify which comparisons between sample groups should be made (e.g. group 2 vs reference 1).
 
 ```
-Filename          ID Condition Replicate Date       Time          Reference
-01_cond1gen0_1.fast.gz     1 generic           1 2020-12-05 0 TRUE     
-02_cond1gen0_2.fast.gz     2 generic           2 2020-12-05 0 TRUE     
-03_cond1gen8_1.fast.gz     3 generic           1 2020-12-08 8 FALSE    
-04_cond1gen8_2.fast.gz     4 generic           2 2020-12-08 8 FALSE  
+file_name                  ID condition replicate date        time group reference_group
+01_cond1gen0_1.fastq.gz     1 generic           1 2020-12-05     0     1               1
+02_cond1gen0_2.fastq.gz     2 generic           2 2020-12-05     0     1               1
+03_cond1gen8_1.fastq.gz     3 generic           1 2020-12-08     8     2               1
+04_cond1gen8_2.fastq.gz     4 generic           2 2020-12-08     8     2               1
 ```
 
 ### Running the analysis
@@ -102,6 +103,7 @@ This script calculates gene fitness using the method described in [Wetmore 2015]
 - `gene_id` - name of the column containing gene IDs in the pool file
 - `metadata` - path to the metadata file (default: `./data/example/fastq/metadata.tsv`)
 - `output_dir` (default `./`)
+- `deseq` - use Deseq2 instead of method from Wetmore et. al. (`0`/`1`, default: `0`)
 
 ```
 source/calculate_gene_fitness.sh --result data/example/results/result.poolcount \
@@ -111,7 +113,7 @@ source/calculate_gene_fitness.sh --result data/example/results/result.poolcount 
   --output_dir data/example/results/
 ```
 
-Expected output are result tables in memory-efficient `.Rdata` format and summary plots in `.png` and `.pdf` format. The two tables are `fitness.Rdata` for all strains (barcodes), including data per gene (columns `Strains_per_gene`, `Norm_fg`, `t`, `Significant`), and `fitness_gene.Rdata` for gene fitness data only (columns `Counts` and `n0` are summed over all strains [barcodes] for each gene, column `log2FC` is log2(`Counts`/`n0`)).
+Expected output are result tables in memory-efficient `.Rdata` format and summary plots in `.png` and `.pdf` format. The two tables are `fitness.Rdata` for all strains (barcodes), including data per gene (columns `strains_per_gene`, `norm_gene_fitness`, `t`, `significant`), and `fitness_gene.Rdata` for gene fitness data only (columns `counts` and `n0` are summed over all strains [barcodes] for each gene, column `log2FC` is log2(`Counts`/`n0`)). Note: The output when using `--deseq 1` is similar to the default but slightly different. DESeq2 summarizes abundance of replicates to mean log2FC, fitness, and p-values per condition. Columns `replicate` and `n0` are not contained in the output and `strain_fitness`/`norm_gene_fitness` is calculated over all time points.
 
 The columns have the following contents:
 
@@ -120,18 +122,18 @@ The columns have the following contents:
 | barcode | Barcode sequence (not in fitness_gene table) |
 | locusId | Locus ID (gene name) |
 | scaffold | Name of DNA molecule |
-| Date | Sample date batch; Variable connecting samples to t0 samples |
-| Time | Timepoint |
+| date | Sample date batch; Variable connecting samples to t0 samples |
+| time | Timepoint |
 | ID | Sample ID |
-| Condition | Growth condition |
-| Replicate | Replicate ID |
-| Counts | Read count for strain (barcode) in sample (summed per gene in fitness_gene table) |
+| condition | Growth condition |
+| replicate | Replicate ID |
+| counts | Read count for strain (barcode) in sample (summed per gene in fitness_gene table) |
 | n0 | Read count in corresponding t0 samples |
-| Strains_per_gene | Number of strains (barcodes) for the current locusId |
-| Strain_fitness | Strain (barcode) fitness (not in fitness_gene table); f_s on p.12 in Wetmore 2015 |
-| Norm_fg | Normalized gene fitness; (iii) on p.13 in Wetmore 2015 |
+| strains_per_gene | Number of strains (barcodes) for the current locusId |
+| strain_fitness | Strain (barcode) fitness (not in fitness_gene table); f_s on p.12 in Wetmore 2015 |
+| norm_gene_fitness | Normalized gene fitness; (iii) on p.13 in Wetmore 2015 |
 | t | t-like test statistic; calculated on p.13 in Wetmore 2015 |
-| Significant | Significant gene if \|t\| > 4; stated on p.3 in Wetmore 2015 |
+| significant | Significant gene if \|t\| > 4; stated on p.3 in Wetmore 2015 |
 | log2FC | log2(Counts/n0), only in fitness_gene table |
 
 
