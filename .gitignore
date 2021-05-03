@@ -1,2 +1,7 @@
+.Rhistory
 data/*
 ref/*
+source/*
+archive/*
+.Rproj.user
+*.Rproj
