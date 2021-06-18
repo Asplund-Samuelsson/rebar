@@ -6,8 +6,14 @@ Pipeline for analysis of Tn-BarSeq data. The pipeline is based on the scripts of
 
 ## Usage
 
-The pipeline currently calculates gene fitness values by using a TnSeq knockout genome mapping 'pool file', a 'metadata' file, and gzipped `fastq` files.
+### Prerequisites
 
+- Linux environment with `bash`, `perl` installed
+- a DNA alignment software, the default here is `blat`. It can be downloaded [here](http://hgdownload.soe.ucsc.edu/downloads.html#source_downloads) and should placed in `feba/bin/`
+- Perl scripts from [Morgan Price's Feba repository](https://bitbucket.org/berkeleylab/feba/src/master/), A. Arkin lab, Berkeley (see `feba/bin/`)
+- Gzipped `fastq` sequencing data as obtained from Illumina runs (see `data/example/fastq`)
+- a [TnSeq](https://github.com/m-jahn/TnSeq-pipe) 'pool file' with barcode-to-genome mappings
+- a 'metadata' file describing the input files
 
 ### Retrieving data from Illumina basespace *via* command line (optional)
 
