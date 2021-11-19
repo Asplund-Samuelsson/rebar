@@ -156,7 +156,7 @@ Reads per barcode (by sample)    |  PCA of samples
 
 ## Authors
 
-Johannes Asplund-Samuelsson, KTH (johannes.asplund.samuelsson@scilifelab.se)
+Johannes Asplund-Samuelsson (johannes.aspsam@gmail.com)
 
 Qi Chen, KTH (qiche@kth.se)
 
